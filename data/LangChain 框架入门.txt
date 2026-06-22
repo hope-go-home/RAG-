@@ -1,0 +1,18 @@
+LangChain 大模型应用开发框架
+
+LangChain 是 Harrison Chase 于 2022 年创立的开源框架，旨在简化和加速基于大语言模型（LLM）的应用程序开发。它将 LLM 调用、提示词管理、记忆模块、检索增强生成、Agent 工具调用等功能抽象为可组合的组件，让开发者能像搭积木一样构建复杂的 AI 应用。
+
+一、核心组件
+LangChain 的核心抽象包括：Model I/O（模型输入输出）负责封装对不同 LLM 提供商的调用，支持 OpenAI、Anthropic、Google、阿里云百炼 DashScope 等主流平台；Retrieval（检索）提供文档加载器、文本分割器、嵌入模型、向量存储的一整套检索管线；Chains（链）将多个组件串联成可执行的工作流；Agents（智能体）让 LLM 根据用户输入自主决策调用哪些工具、以什么顺序调用；Memory（记忆）在多次交互之间持久化对话上下文；Callbacks（回调）用于日志记录、性能监控和流式输出。
+
+二、提示词管理与模型调用
+ChatPromptTemplate 是提示词管理的核心类，使用花括号 {variable} 作为占位符定义变量位置。通过 format_messages() 方法将变量填充到模板中，生成最终的提示词消息列表。支持 SystemMessage（系统指令）、HumanMessage（用户消息）、AIMessage（AI 回复）等消息类型。ChatOpenAI 类封装了 OpenAI 兼容的聊天模型 API，只需配置 model（模型名）、api_key（API 密钥）、base_url（接口地址）三个参数即可对接不同厂商。temperature 参数控制生成随机性（0 为确定、1 为灵活），max_tokens 限制最大输出长度。StrOutputParser 将 AIMessage 对象提取为纯文本字符串，是最简单的输出解析器。JsonOutputParser 将 JSON 格式的 LLM 输出解析为 Python 字典。
+
+三、检索增强生成（RAG）管线
+LangChain 提供了完整的 RAG 开发套件。文档加载（Document Loaders）：内置 PyMuPDFLoader（PDF）、Docx2txtLoader（Word）、TextLoader（纯文本）、CSVLoader（表格数据）、UnstructuredMarkdownLoader（Markdown）等数十种加载器。文本分割（Text Splitters）：RecursiveCharacterTextSplitter 是推荐的通用分割器，按 chunk_size（块大小）和 chunk_overlap（重叠量）参数将长文档切分为语义连贯的短文本块，默认分隔符优先级为换行符、句号、空格、字符。嵌入模型（Embeddings）：OpenAIEmbeddings 对接 OpenAI 兼容嵌入 API，embed_documents() 批量编码文档，embed_query() 编码单条查询。向量存储（Vector Stores）：支持 Milvus、Chroma、Pinecone、Qdrant、FAISS 等。检索器（Retrievers）封装了从向量库中根据查询检索相关文档的逻辑。LangChain Hub 提供社区维护的 RAG 提示词模板。
+
+四、LCEL（LangChain 表达式语言）
+LCEL 使用管道操作符 | 将组件串联为可执行链（Runnable）。语法为 chain = prompt | llm | parser，pipe 保证了前一个组件的输出自动传给下一个组件。chain.invoke() 执行同步单次调用，chain.batch() 批量处理，chain.stream() 返回生成器实现逐 token 流式输出，chain.astream() 是异步版本。RunnablePassthrough 用于在链中透传数据，RunnableLambda 将普通函数包装为可运行对象。LCEL 链支持自动并行化——当链中的多个分支互不依赖时，LangChain 自动并行执行。每个 Runnable 都实现了 RunnableConfig 接口，可配置 callbacks、tags、metadata 用于追踪和调试。
+
+五、Agents 与工具调用
+Agent 是 LangChain 的核心创新之一。Agent 接收用户输入后，调用 LLM 分析意图、决定使用哪个工具、以什么参数调用，然后根据工具返回结果决定下一步行动——继续调用工具或生成最终回答。这种"思考-行动-观察"（ReAct）循环让 LLM 具备了与外部世界交互的能力。Tool 抽象统一了函数调用、API 请求、数据库查询等操作。LangGraph 是 LangChain 团队推出的有状态多步骤 Agent 编排框架，用图数据结构定义 Agent 的工作流，支持条件分支、循环、子图、人机协作等高级控制流。节点（Node）是图的计算单元，边（Edge）定义执行顺序，状态（State）在节点间传递和更新。compile() 将图编译为可执行应用。

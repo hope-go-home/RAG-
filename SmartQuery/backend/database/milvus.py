@@ -39,7 +39,7 @@ def create_collection():
     #Milvus 集合中的 dense_vector 字段创建索引，从而加速相似度检索
     collection.create_index(field_name="sparse_vector", index_params={"index_type": "SPARSE_INVERTED_INDEX", "metric_type": "IP"})
     ## 为 sparse_vector 字段创建稀疏向量专用索引（倒排索引），度量类型仍为 IP
-    collection.load() 
+    collection.load()
     #将集合加载到内存，后续才能进行插入和搜索
 
 #定义 insert_documents 函数，向集合中插入文档记录
@@ -92,7 +92,7 @@ def search_sparse(
     kwargs = {"data": [query_vector],
                "anns_field": "sparse_vector",
               "param": {"metric_type": "IP"},
-              "limit": top_k, 
+              "limit": top_k,
               "output_fields": ["text", "parent_text"]
     }
     if partition_name:
@@ -102,18 +102,19 @@ def search_sparse(
     return [(hit.entity.get("text"), hit.entity.get("parent_text"), hit.score) for hit in results[0]]
 
 
+# ---------------- 工具函数（Agentic RAG 用）---------------- #
+
+def get_collection_stats() -> dict:
+    """返回集合统计：各分区文档数、总文档数"""
+    collection = Collection(name=COLLECTION_NAME)
+    collection.load()
+    stats = {"total": collection.num_entities, "partitions": {}}
+    for part in collection.partitions:
+        stats["partitions"][part.name] = part.num_entities
+    return stats
 
 
-
-
-"""
-Collection（集合）
-├─ Schema（结构：定义所有字段、类型、约束）
-│  ├─ 主键字段
-│  ├─ 向量字段（唯一）
-│  └─ 多个标量字段
-├─ Partition 分区（逻辑分组，结构继承 Schema）
-│  ├─ Entity 实体（单条数据 = 一行记录）
-│  └─ 索引（向量索引 + 标量索引）
-└─ 索引（挂载在集合/分区上）
-"""
+def list_partitions() -> list[str]:
+    """列出所有分区名"""
+    collection = Collection(name=COLLECTION_NAME)
+    return [p.name for p in collection.partitions]
