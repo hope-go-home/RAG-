@@ -1,0 +1,27 @@
+[
+  {
+    "question": "Python 怎么读取文件内容",
+    "ground_truth": "使用 open() 打开文件，模式设为 'r'，然后调用 read() 方法读取内容",
+    "expected_docs": ["Python 文件操作使用 open() 函数"]
+  },
+  {
+    "question": "什么是 RAG",
+    "ground_truth": "RAG 是检索增强生成，先检索知识库再让大模型生成答案",
+    "expected_docs": ["RAG 的工作流程分为两步"]
+  },
+  {
+    "question": "Milvus 支持哪些索引类型",
+    "ground_truth": "Milvus 支持 IVF_FLAT、IVF_SQ8、HNSW 等多种索引类型",
+    "expected_docs": ["Milvus 支持多种索引类型"]
+  },
+  {
+    "question": "关系型数据库和非关系型数据库有什么区别",
+    "ground_truth": "关系型数据库用表组织数据，非关系型数据库包括文档型、键值型等",
+    "expected_docs": ["数据库分为关系型和非关系型"]
+  },
+  {
+    "question": "Python 的 with 语句有什么用",
+    "ground_truth": "with 语句可以自动管理资源，比如文件操作完成后自动关闭文件",
+    "expected_docs": ["使用 with 语句自动管理"]
+  }
+]

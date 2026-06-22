@@ -1,0 +1,87 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: rag-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: resume_rag_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - D:\DockerData\ResumeRAG\mysql:/var/lib/mysql
+    restart: no
+
+  mongodb:
+    image: mongo:6.0
+    container_name: rag-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+      MONGO_INITDB_DATABASE: resume_rag_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - D:\DockerData\ResumeRAG\mongo:/data/db
+    restart: no
+
+  elasticsearch:
+    image: elasticsearch:8.10.2
+    container_name: rag-es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+      - http.cors.allow-headers=X-Requested-With,Content-Type,Content-Length,Authorization
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - D:\DockerData\ResumeRAG\es:/usr/share/elasticsearch/data
+    restart: no
+
+  etcd:
+    image: quay.m.daocloud.io/coreos/etcd:v3.5.18
+    container_name: rag-etcd
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - D:\DockerData\ResumeRAG\etcd:/etcd
+    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    ports:
+      - "2379:2379"
+    restart: no
+
+  minio:
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    container_name: rag-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - D:\DockerData\ResumeRAG\minio:/data
+    restart: no
+
+  milvus:
+    image: milvusdb/milvus:v2.6.13
+    container_name: rag-milvus
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    command: milvus run standalone   
+    depends_on:
+      - etcd
+      - minio
+    volumes:
+      - D:\DockerData\ResumeRAG\milvus:/var/lib/milvus
+    restart: no

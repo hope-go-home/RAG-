@@ -1,0 +1,40 @@
+services:
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: no
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: rag-mysql
+      PMA_PORT: 3306
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: no
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: rag-mongo
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: 123456
+
+  elasticvue:
+    image: cars10/elasticvue
+    container_name: elasticvue
+    restart: no
+    ports:
+      - "8082:8080"
+    environment:
+      ELASTICSEARCH_URI: http://rag-es:9200
+      ELASTICSEARCH_HOSTS: http://rag-es:9200
+
+  attu:
+    image: zilliz/attu:latest
+    container_name: attu
+    restart: no
+    ports:
+      - "8001:3000"
+    environment:
+      MILVUS_URL: rag-milvus:19530
