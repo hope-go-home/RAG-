@@ -136,18 +136,3 @@ def retrieve_with_meta(question: str, top_k: int = 10, partition_name: str | Non
 
 
 
-
-"""
-用户问题
-   ↓
-embed_query()      → 稠密向量（OpenAI）
-embed_query_sparse() → 稀疏向量（bge-m3）
-   ↓      ↓
-search_dense()    search_sparse()
-   ↓      ↓
-   rrf_fusion()   ← 融合排序
-       ↓
-   rerank()       ← 交叉编码器重排序
-       ↓
-   返回 TopK 文档
-"""

@@ -1,4 +1,5 @@
 import json
+import os
 from typing import TypedDict
 from SmartQuery.rag.retriever import retrieve, retrieve_with_meta, RetrievalResult
 from langchain_openai import ChatOpenAI
@@ -47,8 +48,9 @@ llm = ChatOpenAI(
     base_url=QWEN_BASE_URL,
 )
 
-# 轻量模型：文档打分、查询改写、反思检查不需要最强模型，qwen-plus 够用且省钱
-SMALL_MODEL = "qwen-plus"
+# 轻量模型：文档打分、查询改写、反思检查
+# 优先使用环境变量 SMALL_MODEL，否则回退到主模型（避免模型名无效导致静默失败）
+SMALL_MODEL = os.getenv("SMALL_MODEL", QWEN_MODEL)
 small_llm = ChatOpenAI(
     model=SMALL_MODEL,
     api_key=QWEN_API_KEY,

@@ -1,27 +1,37 @@
 [
   {
-    "question": "Python 怎么读取文件内容",
-    "ground_truth": "使用 open() 打开文件，模式设为 'r'，然后调用 read() 方法读取内容",
-    "expected_docs": ["Python 文件操作使用 open() 函数"]
+    "question": "B+树索引的底层数据结构是什么？为什么它适合范围查询？",
+    "ground_truth": "B+树是一种多路平衡搜索树，所有数据存储在叶子节点，非叶子节点仅存键值和指针。叶子节点通过指针形成有序双向链表，因此范围查询效率极高。",
+    "expected_docs": ["B+树（B-Plus Tree）数据结构"],
+    "relevant_keywords": ["B+树（B-Plus Tree）数据结构"],
+    "total_relevant": 3
   },
   {
-    "question": "什么是 RAG",
-    "ground_truth": "RAG 是检索增强生成，先检索知识库再让大模型生成答案",
-    "expected_docs": ["RAG 的工作流程分为两步"]
+    "question": "Python中with语句的作用是什么？它背后用到了什么协议？",
+    "ground_truth": "with语句自动管理资源（如文件关闭），背后实现了上下文管理协议（__enter__和__exit__方法）。即使发生异常也能安全释放资源。",
+    "expected_docs": ["with 语句自动管理资源的打开和释放"],
+    "relevant_keywords": ["with 语句自动管理资源的打开和释放"],
+    "total_relevant": 2
   },
   {
-    "question": "Milvus 支持哪些索引类型",
-    "ground_truth": "Milvus 支持 IVF_FLAT、IVF_SQ8、HNSW 等多种索引类型",
-    "expected_docs": ["Milvus 支持多种索引类型"]
+    "question": "什么是RAG？稠密检索和稀疏检索各自擅长什么？",
+    "ground_truth": "RAG是检索增强生成。稠密向量擅长语义匹配（同义词），稀疏向量擅长精确关键词匹配（术语、缩写）。两者通过RRF融合互补。",
+    "expected_docs": ["检索增强生成（Retrieval-Augmented Generation"],
+    "relevant_keywords": ["检索增强生成（Retrieval-Augmented Generation", "稠密检索（Dense Retrieval）"],
+    "total_relevant": 3
   },
   {
-    "question": "关系型数据库和非关系型数据库有什么区别",
-    "ground_truth": "关系型数据库用表组织数据，非关系型数据库包括文档型、键值型等",
-    "expected_docs": ["数据库分为关系型和非关系型"]
+    "question": "传统RAG和Agentic RAG的核心区别是什么？文档评分和重检机制解决了什么问题？",
+    "ground_truth": "传统RAG只检索一次就生成答案。Agentic RAG加入文档评分机制，不理想的检索结果会触发搜索词改写和重新检索（最多3轮），解决了单次检索质量不可控的问题。",
+    "expected_docs": ["Agentic RAG 引入了智能体决策机制"],
+    "relevant_keywords": ["Agentic RAG 引入了智能体决策机制", "朴素 RAG（单次检索加单次生成）"],
+    "total_relevant": 2
   },
   {
-    "question": "Python 的 with 语句有什么用",
-    "ground_truth": "with 语句可以自动管理资源，比如文件操作完成后自动关闭文件",
-    "expected_docs": ["使用 with 语句自动管理"]
+    "question": "数据库索引和Python列表的index()有什么本质区别？为什么稀疏检索会把两者都搜出来？",
+    "ground_truth": "数据库索引是B+树数据结构用于加速查询，Python列表的index()是查找元素在列表中的位置编号，两者完全不同。稀疏检索基于关键词匹配，因为两者都包含'索引'这个词所以都命中，但稠密向量和重排序能区分语义差异。",
+    "expected_docs": ["B+树是一种多路平衡搜索树"],
+    "relevant_keywords": ["B+树是一种多路平衡搜索树"],
+    "total_relevant": 3
   }
 ]

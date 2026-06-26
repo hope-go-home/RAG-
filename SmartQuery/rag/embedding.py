@@ -50,13 +50,12 @@ sparse_model = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
 tokenizer = sparse_model.tokenizer  # 用来把 token 字符串转成 int ID（Milvus 需要）
 
 def embed_query_sparse(text: str) -> dict[int, float]:
-    output = sparse_model.encode([text], return_sparse=True)
-    # lexical_weights[0] 的 key 已经是 token ID（字符串），直接转 int 即可
+    output = sparse_model.encode([text], return_sparse=True, return_dense=False)
     raw = output['lexical_weights'][0]
     return {int(t): float(w) for t, w in raw.items()}
 
 def embed_documents_sparse(texts: list[str]) -> list[dict[int, float]]:
-    output = sparse_model.encode(texts, return_sparse=True)
+    output = sparse_model.encode(texts, return_sparse=True, return_dense=False)
     results = []
     for raw in output['lexical_weights']:
         results.append({int(t): float(w) for t, w in raw.items()})

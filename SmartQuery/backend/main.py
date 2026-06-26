@@ -75,40 +75,50 @@ async def chat_stream(request: ChatRequest):
 
     async def event_generator():
         accumulated = {}  # 累积所有节点的输出，避免后一节点覆盖前一节点的字段
+        in_answer = False  # 只在 generate/direct_answer 节点中推送 token
+        NODES = {"query_analysis", "retrieve", "grade_documents", "rewrite_query",
+                 "generate", "reflect", "direct_answer"}
         try:
-            async for chunk in rag_agent.astream(initial_state):
-                for node_name, node_output in chunk.items():
-                    accumulated.update(node_output)  # 累积，不覆盖
+            async for event in rag_agent.astream_events(initial_state, version="v2"):
+                kind = event["event"]
+                name = event.get("name", "")
 
-                    # 推送思考步骤
-                    steps = node_output.get("thinking_steps", [])
+                # token 级流式：只在 generate / direct_answer 中推送每个 token
+                if kind == "on_chat_model_stream" and in_answer:
+                    chunk = event["data"]["chunk"]
+                    if hasattr(chunk, "content") and chunk.content:
+                        yield _sse("token", {"content": chunk.content})
+
+                # 节点开始：标记是否进入答案生成节点
+                elif kind == "on_chain_start" and name in ("generate", "direct_answer"):
+                    in_answer = True
+
+                # 节点结束：处理节点输出
+                elif kind == "on_chain_end" and name in NODES:
+                    if name in ("generate", "direct_answer"):
+                        in_answer = False
+                    output = event.get("data", {}).get("output", {})
+                    if not isinstance(output, dict):
+                        continue
+                    accumulated.update(output)
+
+                    steps = output.get("thinking_steps", [])
                     if steps:
-                        latest = steps[-1]
-                        yield _sse("thinking", {
-                            "node": node_name,
-                            "info": latest.get("info", ""),
-                        })
+                        yield _sse("thinking", {"node": name, "info": steps[-1].get("info", "")})
 
-                    # 推送检索来源
-                    sources = node_output.get("retrieval_sources")
+                    sources = output.get("retrieval_sources")
                     if sources:
                         yield _sse("sources", {"sources": sources[:10]})
 
-                    # 推送检索统计（dense/sparse/RRF 各阶段命中数）
-                    stats = node_output.get("retrieval_stats")
+                    stats = output.get("retrieval_stats")
                     if stats:
                         yield _sse("stats", stats)
 
-                    # 推送文档评分
-                    grades = node_output.get("document_grades")
+                    grades = output.get("document_grades")
                     if grades:
-                        yield _sse("grades", {
-                            "grades": grades,
-                            "need_retrieve": node_output.get("need_retrieve", False),
-                        })
+                        yield _sse("grades", {"grades": grades, "need_retrieve": output.get("need_retrieve", False)})
 
-                    # 推送反思结果
-                    reflection = node_output.get("reflection_result")
+                    reflection = output.get("reflection_result")
                     if reflection:
                         yield _sse("reflection", reflection)
 

@@ -17,7 +17,7 @@ if "last_uploaded" not in st.session_state:
 # ------------------ 页面配置 ------------------ #
 
 st.set_page_config(page_title="Agentic RAG", layout="wide")
-st.title("Agentic RAG - 智能问答系统")
+st.title("Agentic RAG - 专业知识智能问答系统")
 st.caption("LangGraph Agentic RAG · 混合检索（稠密 + 稀疏）+ 文档评分 + 幻觉检查")
 
 # ------------------ 双栏布局 ------------------ #
@@ -164,15 +164,15 @@ with right_col:
                     thinking_log.append(f"[Reflect] {event.get('issues', '无问题')}（完整度 {event.get('completeness_score', '?')}/5）")
                     thinking_area.markdown("\n\n".join(thinking_log))
 
-                # --- 最终答案 ---
+                # --- Token 流式（打字机效果） ---
+                # --- 最终答案（兼容非流式模式） ---
                 elif etype == "answer":
                     full_answer = event.get("answer", "")
                     answer_placeholder.markdown(full_answer)
 
-                # --- 完成 ---
+                # --- 完成（去掉光标，持久化消息） ---
                 elif etype == "done":
-                    if not full_answer:
-                        answer_placeholder.markdown("（未生成回答）")
+                    answer_placeholder.markdown(full_answer if full_answer else "（未生成回答）")
                     st.session_state.messages.append({"role": "assistant", "content": full_answer})
 
                 # --- 错误 ---
