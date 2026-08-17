@@ -3,6 +3,9 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from SmartQuery.rag.embedding import embed_documents, embed_documents_sparse
 from SmartQuery.backend.database.milvus import insert_documents
+from SmartQuery.backend.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 
@@ -12,7 +15,7 @@ def load_file(file_path:str) -> list[Document]:
         loader = PyMuPDFLoader(file_path)
     elif ext == "docx":
         loader = Docx2txtLoader(file_path)
-    elif ext == "txt":
+    elif ext in ("txt", "md"):
         loader = TextLoader(file_path, encoding="utf-8")
     else:
         raise ValueError(f"不支持的文件类型: {ext}")
@@ -37,7 +40,7 @@ def split_documents(docs: list[Document]) -> tuple[list[str], list[str]]:
 
 def get_partition(file_path: str) -> str:
     ext = file_path.rsplit(".", 1)[-1].lower()
-    return ext if ext in ("pdf", "docx", "txt") else "pdf"
+    return ext if ext in ("pdf", "docx", "txt", "md") else "pdf"
 
 
 def ingest_file(file_path: str) -> int:
@@ -51,4 +54,5 @@ def ingest_file(file_path: str) -> int:
     insert_documents(child_texts, parent_texts, dense_vectors, sparse_vectors, partition)
     # 将子块文本、父块文本、稠密向量、稀疏向量以及分区信息写入 Milvus 数据库。
 
+    logger.info("ingest file=%s partition=%s chunks=%d", file_path, partition, len(child_texts))
     return len(child_texts) #返回成功插入的子块数量，便于调用方了解本次摄入的数据规模

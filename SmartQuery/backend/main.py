@@ -1,19 +1,26 @@
 import json
-from fastapi import FastAPI, UploadFile, File, Query
+import hashlib
+import time
+from fastapi import FastAPI, UploadFile, File, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import os
 import uuid
 
+from SmartQuery.backend.logger import get_logger
+from SmartQuery.backend.health import health_router
 from SmartQuery.backend.database.milvus import connect_milvus, create_collection
-from SmartQuery.backend.database.mysql import init_db
+from SmartQuery.backend.database.mysql import init_db, find_file_by_hash, save_file_record
 from SmartQuery.rag.agent import app as rag_agent
-from SmartQuery.rag.ingest import ingest_file
+from SmartQuery.rag.ingest import ingest_file, get_partition
+
+logger = get_logger(__name__)
 
 UPLOAD_DIR = "data/docs"
 
 app = FastAPI(title="Agentic RAG")
+app.include_router(health_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,6 +29,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def access_log(request: Request, call_next):
+    """访问日志：记录每个请求的方法、路径、状态码、耗时"""
+    start = time.perf_counter()
+    try:
+        response = await call_next(request)
+        elapsed = (time.perf_counter() - start) * 1000
+        logger.info(
+            "request %s %s -> %s (%.1fms)",
+            request.method, request.url.path, response.status_code, elapsed,
+        )
+        return response
+    except Exception:
+        elapsed = (time.perf_counter() - start) * 1000
+        logger.exception("request %s %s failed (%.1fms)", request.method, request.url.path, elapsed)
+        raise
 
 session_contexts = {}   # 存储每个 session 的上下文 + 对话历史，用于多轮对话
 
@@ -48,10 +73,11 @@ def startup():
 @app.post("/chat")
 def chat(question: str = Query(...), session_id: str = Query(default=None)):
     sid = session_id or uuid.uuid4().hex[:8]
+    logger.info("chat start session=%s question=%s", sid, question[:100])
     initial_state = _build_initial_state(sid, question)
     result = rag_agent.invoke(initial_state)
     _persist_session(sid, question, result)
-
+    logger.info("chat done session=%s answer_len=%d", sid, len(result.get("answer", "")))
     return {
         "session_id": sid,
         "question": question,
@@ -143,16 +169,65 @@ async def chat_stream(request: ChatRequest):
     )
 
 
-# ------------------ /upload 不变 ------------------ #
+# ------------------ /upload 批量上传 + 去重入库 ------------------ #
+# 支持一次传多个文件；按内容 SHA-256 哈希查重，重复文件自动跳过
+# 请求格式：multipart/form-data，字段名 "files"（兼容单文件字段 "file"）
+
+SUPPORTED_EXTS = {"pdf", "docx", "txt", "md"}
+
+
+def _file_sha256(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
 
 @app.post("/upload")
-def upload(file: UploadFile = File(...)):
-    ext = file.filename.rsplit(".", 1)[-1]
-    save_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4().hex}.{ext}")
-    with open(save_path, "wb") as f:
-        f.write(file.file.read())
-    count = ingest_file(save_path)
-    return {"message": f"成功入库 {count} 个文档块", "file": file.filename}
+def upload(files: list[UploadFile] = File(...)):
+    results = []
+    logger.info("upload start files=%d", len(files))
+    for file in files:
+        ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+        if ext not in SUPPORTED_EXTS:
+            logger.warning("upload reject unsupported ext=%s file=%s", ext, file.filename)
+            results.append({"file": file.filename, "status": "failed", "message": f"不支持的文件类型 .{ext}"})
+            continue
+
+        save_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4().hex}.{ext}")
+        with open(save_path, "wb") as f:
+            f.write(file.file.read())
+
+        file_hash = _file_sha256(save_path)
+        existing = find_file_by_hash(file_hash)
+        if existing:
+            os.remove(save_path)  # 清理已存在文件的临时副本
+            logger.info("upload duplicate file=%s hash=%s", file.filename, file_hash[:12])
+            results.append({
+                "file": file.filename,
+                "status": "duplicate",
+                "message": f"已入库过（{existing['chunk_count']} 块，{existing['created_at']}），跳过",
+            })
+            continue
+
+        try:
+            count = ingest_file(save_path)
+            partition = get_partition(save_path)
+            save_file_record(file_hash, file.filename, partition, count)
+            logger.info("upload success file=%s chunks=%d partition=%s", file.filename, count, partition)
+            results.append({"file": file.filename, "status": "success", "message": f"成功入库 {count} 个文档块"})
+        except Exception as e:
+            logger.error("upload failed file=%s error=%s", file.filename, e, exc_info=True)
+            results.append({"file": file.filename, "status": "failed", "message": f"入库失败：{e}"})
+
+    success = sum(1 for r in results if r["status"] == "success")
+    duplicate = sum(1 for r in results if r["status"] == "duplicate")
+    failed = sum(1 for r in results if r["status"] == "failed")
+    return {
+        "message": f"批量入库完成：成功 {success} 个，重复跳过 {duplicate} 个，失败 {failed} 个",
+        "results": results,
+    }
 
 
 # ------------------ /history 不变 ------------------ #

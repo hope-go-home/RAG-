@@ -1,6 +1,7 @@
 import json
 import streamlit as st
 import requests
+import time
 import uuid
 
 API_BASE = "http://localhost:8000"
@@ -13,6 +14,18 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "last_uploaded" not in st.session_state:
     st.session_state.last_uploaded = None
+
+# SSE 流式期间对 st.empty() 占位符的更新节流（避免 Streamlit 高频渲染 DOM 竞态 bug）
+_last_render = {}
+
+
+def _should_render(key: str, interval: float = 0.3) -> bool:
+    """同一占位符在 interval 秒内最多更新一次"""
+    now = time.time()
+    if now - _last_render.get(key, 0) >= interval:
+        _last_render[key] = now
+        return True
+    return False
 
 # ------------------ 页面配置 ------------------ #
 
@@ -41,17 +54,25 @@ with left_col:
 
     st.divider()
     st.subheader("Upload 文档上传")
-    uploaded = st.file_uploader("选择文件", type=["pdf", "docx", "txt"], label_visibility="collapsed")
+    uploaded = st.file_uploader("选择文件（可多选）", type=["pdf", "docx", "txt", "md"],
+                                accept_multiple_files=True, label_visibility="collapsed")
     if uploaded:
-        file_key = f"{uploaded.name}_{uploaded.size}"
-        if file_key != st.session_state.last_uploaded:
+        keys = {f"{f.name}_{f.size}" for f in uploaded}
+        if keys != st.session_state.last_uploaded:
             try:
-                files = {"file": (uploaded.name, uploaded.read(), uploaded.type)}
+                files = [("files", (f.name, f.read(), f.type)) for f in uploaded]
                 with st.spinner("正在上传并入库..."):
-                    resp = requests.post(f"{API_BASE}/upload", files=files, timeout=120)
+                    resp = requests.post(f"{API_BASE}/upload", files=files, timeout=300)
                 if resp.ok:
-                    st.success(resp.json()["message"])
-                    st.session_state.last_uploaded = file_key
+                    data = resp.json()
+                    for r in data.get("results", []):
+                        if r["status"] == "success":
+                            st.success(f"{r['file']}：{r['message']}")
+                        elif r["status"] == "duplicate":
+                            st.warning(f"{r['file']}：{r['message']}")
+                        else:
+                            st.error(f"{r['file']}：{r['message']}")
+                    st.session_state.last_uploaded = keys
                 else:
                     st.error(f"上传失败：{resp.status_code} {resp.text}")
             except requests.exceptions.Timeout:
@@ -69,7 +90,7 @@ with left_col:
         if resp.ok:
             records = resp.json()
             if records:
-                for i, msg in enumerate(reversed(records[-20:])):
+                for msg in reversed(records[-20:]):
                     q_preview = msg['question'][:50]
                     with st.expander(f"Q: {q_preview}{'...' if len(msg['question']) > 50 else ''}", expanded=False):
                         st.markdown(f"**问：** {msg['question']}")
@@ -116,25 +137,27 @@ with right_col:
                     continue
 
                 etype = event.get("type", "")
-                # --- 思考步骤 ---
+                # --- 思考步骤（节流渲染） ---
                 if etype == "thinking":
                     info = event.get("info", "")
                     thinking_log.append(f"[OK] {info}")
-                    thinking_area.markdown("\n\n".join(thinking_log))
+                    if _should_render("thinking"):
+                        thinking_area.markdown("\n\n".join(thinking_log))
 
-                # --- 检索统计 ---
+                # --- 检索统计（节流渲染） ---
                 elif etype == "stats":
-                    stats_area.markdown(
-                        f"稠密命中 **{event.get('dense_hits','?')}** → "
-                        f"稀疏命中 **{event.get('sparse_hits','?')}** → "
-                        f"RRF 融合 **{event.get('fused_count','?')}** → "
-                        f"Rerank **{event.get('reranked_count','?')}**"
-                    )
+                    if _should_render("stats"):
+                        stats_area.markdown(
+                            f"稠密命中 **{event.get('dense_hits','?')}** → "
+                            f"稀疏命中 **{event.get('sparse_hits','?')}** → "
+                            f"RRF 融合 **{event.get('fused_count','?')}** → "
+                            f"Rerank **{event.get('reranked_count','?')}**"
+                        )
 
-                # --- 检索来源（链路追踪卡片：dense#X + sparse#Y → RRF → rerank#Z） ---
+                # --- 检索来源（链路追踪卡片：dense#X + sparse#Y → RRF → rerank#Z，节流渲染） ---
                 elif etype == "sources":
                     sources_list = event.get("sources", [])
-                    if sources_list:
+                    if sources_list and _should_render("sources"):
                         cards = []
                         for i, s in enumerate(sources_list):
                             d = s.get("dense_rank") or "-"
@@ -148,7 +171,7 @@ with right_col:
                             )
                         sources_area.markdown("\n\n---\n".join(cards))
 
-                # --- 文档评分 ---
+                # --- 文档评分（与 sources 共用占位符，节流渲染） ---
                 elif etype == "grades":
                     grades = event.get("grades", [])
                     need = event.get("need_retrieve", False)
@@ -157,21 +180,23 @@ with right_col:
                         gs.append(f"{'[PASS]' if g.get('relevance',0)>=3 else '[DROP]'} 文档{g.get('doc_index','?')} 相关度{g.get('relevance','?')}/5：{g.get('reason','')}")
                     if need:
                         gs.append(" 相关文档不足，触发重检...")
-                    sources_area.markdown("\n\n".join(gs))
+                    if _should_render("grades"):
+                        sources_area.markdown("\n\n".join(gs))
 
-                # --- 反思 ---
+                # --- 反思（节流渲染） ---
                 elif etype == "reflection":
                     thinking_log.append(f"[Reflect] {event.get('issues', '无问题')}（完整度 {event.get('completeness_score', '?')}/5）")
-                    thinking_area.markdown("\n\n".join(thinking_log))
+                    if _should_render("reflection"):
+                        thinking_area.markdown("\n\n".join(thinking_log))
 
-                # --- Token 流式（打字机效果） ---
-                # --- 最终答案（兼容非流式模式） ---
+                # --- 最终答案（非流式兼容：直接展示完整答案） ---
                 elif etype == "answer":
                     full_answer = event.get("answer", "")
                     answer_placeholder.markdown(full_answer)
 
-                # --- 完成（去掉光标，持久化消息） ---
+                # --- 完成（去掉光标，持久化消息；强制渲染被节流跳过的最后状态） ---
                 elif etype == "done":
+                    thinking_area.markdown("\n\n".join(thinking_log))
                     answer_placeholder.markdown(full_answer if full_answer else "（未生成回答）")
                     st.session_state.messages.append({"role": "assistant", "content": full_answer})
 

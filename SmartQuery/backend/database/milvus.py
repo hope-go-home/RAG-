@@ -1,11 +1,15 @@
 from SmartQuery.backend.config import MILVUS_HOST,MILVUS_PORT
+from SmartQuery.backend.logger import get_logger
 from pymilvus import connections,Collection,CollectionSchema,FieldSchema,DataType,utility
-#从 pymilvus 导入所需组件：connections：管理连接。Collection：操作集合的类。CollectionSchema：定义集合结构。
+#从 pymilvus 导入所需组件：connections：管理连接。Collection：管理集合的类。CollectionSchema：定义集合结构。
 # FieldSchema：定义每个字段。DataType：字段类型枚举。utility：工具函数，如 has_collection。
+
+logger = get_logger(__name__)
 
 
 COLLECTION_NAME = "smart_query_docs"  #集合名
 DIMENSION = 1024   #向量维度
+PARTITIONS = ["pdf", "docx", "txt", "md"]  # 支持的文档分区
 
 def connect_milvus():
     connections.connect(
@@ -13,9 +17,16 @@ def connect_milvus():
         host = MILVUS_HOST,  #主机地址
         port = MILVUS_PORT  #端口号
     )
+    logger.info("milvus connected %s:%s", MILVUS_HOST, MILVUS_PORT)
 
 def create_collection():
-    if utility.has_collection(COLLECTION_NAME):  #判断集合是否存在
+    if utility.has_collection(COLLECTION_NAME):
+        # 集合已存在：补建缺失的分区（如旧库没有 md 分区）
+        collection = Collection(name=COLLECTION_NAME)
+        existing = {p.name for p in collection.partitions}
+        for partition in PARTITIONS:
+            if partition not in existing:
+                collection.create_partition(partition)
         return
 
     fields = [
@@ -30,7 +41,7 @@ def create_collection():
     collection = Collection(name=COLLECTION_NAME, schema=schema)
     #创建分区。如果分区已存在会抛出异常，但此处刚创建集合，不会有重复。
 
-    for partition in ["pdf", "docx", "txt"]:
+    for partition in PARTITIONS:
         collection.create_partition(partition)
 
     index_params = {"metric_type": "IP", "index_type": "IVF_FLAT", "params": {"nlist": 128}}
@@ -100,21 +111,3 @@ def search_sparse(
 
     results = collection.search(**kwargs)
     return [(hit.entity.get("text"), hit.entity.get("parent_text"), hit.score) for hit in results[0]]
-
-
-# ---------------- 工具函数（Agentic RAG 用）---------------- #
-
-def get_collection_stats() -> dict:
-    """返回集合统计：各分区文档数、总文档数"""
-    collection = Collection(name=COLLECTION_NAME)
-    collection.load()
-    stats = {"total": collection.num_entities, "partitions": {}}
-    for part in collection.partitions:
-        stats["partitions"][part.name] = part.num_entities
-    return stats
-
-
-def list_partitions() -> list[str]:
-    """列出所有分区名"""
-    collection = Collection(name=COLLECTION_NAME)
-    return [p.name for p in collection.partitions]

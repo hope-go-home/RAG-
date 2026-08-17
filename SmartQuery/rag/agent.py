@@ -1,13 +1,16 @@
 import json
 import os
 from typing import TypedDict
-from SmartQuery.rag.retriever import retrieve, retrieve_with_meta, RetrievalResult
+from SmartQuery.rag.retriever import retrieve_with_meta, RetrievalResult
+from SmartQuery.backend.logger import get_logger
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from SmartQuery.backend.config import QWEN_API_KEY, QWEN_BASE_URL, QWEN_MODEL
 from langgraph.graph import StateGraph, END
 from tenacity import retry, stop_after_attempt, wait_exponential
+
+logger = get_logger(__name__)
 
 
 # ==================== State 定义 ====================
@@ -133,6 +136,9 @@ def query_analysis_node(state: GraphState) -> dict:
         intent = "rag_query"
         search_query = state["question"]
         sub_questions = []
+        logger.warning("query_analysis fallback to default for question=%s", state["question"][:80])
+
+    logger.info("query_analysis intent=%s search_query=%s", intent, search_query[:80])
 
     # 记录思考过程
     step = {"node": "query_analysis", "status": "done", "info": f"意图：{intent}"}
@@ -174,6 +180,11 @@ def retrieve_node(state: GraphState) -> dict:
         "status": "done",
         "info": f"第 {count} 次检索：稠密命中 {result.dense_hit_count}，稀疏命中 {result.sparse_hit_count}，融合得 {result.fused_count} 篇，返回 {len(result.documents)} 篇",
     }
+    logger.info(
+        "retrieve count=%d query=%s dense=%d sparse=%d fused=%d returned=%d",
+        count, search_query[:60], result.dense_hit_count, result.sparse_hit_count,
+        result.fused_count, len(result.documents),
+    )
 
     return {
         "context": result.documents,
@@ -247,6 +258,10 @@ def grade_documents_node(state: GraphState) -> dict:
     # 合并文档列表为文本，每篇给编号
     docs_text = "\n\n".join(f"[{i}] {doc[:400]}" for i, doc in enumerate(context))
 
+    # 打分失败（调用异常 / 输出无法解析）时：不假造"全部通过"，
+    # 显式标记 grade_failed，让检索结果不被采信，走重检或保守降级
+    grade_failed = False
+    grade_fail_reason = ""
     try:
         result = safe_small_llm_invoke(GRADE_PROMPT.format_messages(
             question=state["question"], documents=docs_text
@@ -254,9 +269,12 @@ def grade_documents_node(state: GraphState) -> dict:
         grades = _safe_json_parse(result, [])
         if not isinstance(grades, list):
             grades = []
-    except Exception:
-        # 打分失败时默认全给 3 分（中性），不阻塞流程
-        grades = [{"doc_index": i, "relevance": 3, "reason": "评分异常，默认通过"} for i in range(len(context))]
+            grade_failed = True
+            grade_fail_reason = "输出格式异常，无法解析"
+    except Exception as e:
+        grades = []
+        grade_failed = True
+        grade_fail_reason = f"评分调用异常: {e}"
 
     # 按相关性分档
     threshold = 3  # 1-5 分制，>=3 为相关
@@ -269,17 +287,24 @@ def grade_documents_node(state: GraphState) -> dict:
             else:
                 irrelevant.append(context[idx])
 
-    need = len(relevant) < 2  # 相关文档少于 2 篇则认为检索不充分
+    need = (len(relevant) < 2) or grade_failed  # 评分失败等同无法确认相关
     max_attempts = state.get("max_retrieval_attempts", 3)
     retrieval_count = state.get("retrieval_count", 0)
     if need and retrieval_count >= max_attempts:
-        need = False  # 已达最大重试次数，强制生成
+        need = False  # 已达最大重试次数，保守降级：全量 context 生成 + reflect 兜底
+
+    logger.info(
+        "grade_documents relevant=%d irrelevant=%d need_retrieve=%s attempt=%d/%d",
+        len(relevant), len(irrelevant), need, retrieval_count, max_attempts,
+    )
 
     step = {
         "node": "grade_documents",
         "status": "done",
         "info": f"相关 {len(relevant)} 篇 / 不相关 {len(irrelevant)} 篇 → {'需要重检' if need else '进入生成'}",
     }
+    if grade_failed:
+        step["info"] += f"（评分{grade_fail_reason}，结果未采信，已保守降级）"
 
     return {
         "document_grades": grades,
@@ -321,8 +346,10 @@ def rewrite_query_node(state: GraphState) -> dict:
         new_query = result or state["question"]
     except Exception:
         new_query = state["question"]
+        logger.warning("rewrite_query fallback to original question=%s", state["question"][:60])
 
     previous.append(new_query)
+    logger.info("rewrite_query new=%s previous=%s", new_query[:60], ", ".join(previous[:-1])[:80])
     step = {"node": "rewrite_query", "status": "done", "info": f"新搜索词：{new_query}"}
 
     return {
@@ -367,6 +394,7 @@ def generate_node(state: GraphState) -> dict:
         "chat_history": history_str,
         "question": state["question"],
     })
+    logger.info("generate docs=%d answer_len=%d", len(docs), len(answer))
 
     step = {"node": "generate", "status": "done", "info": f"基于 {len(docs)} 篇文档生成回答"}
     return {

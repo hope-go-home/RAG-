@@ -1,0 +1,247 @@
+[
+  {
+    "level": "A_事实单跳",
+    "question": "MySQL InnoDB 的索引底层采用什么数据结构？",
+    "gold_phrases": ["多路平衡搜索树", "叶子节点形成有序双向链表"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "什么是覆盖索引？为什么能避免回表？",
+    "gold_phrases": ["覆盖索引（Covering Index）", "避免回表"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "MySQL 的四种隔离级别分别是什么？",
+    "gold_phrases": ["READ UNCOMMITTED", "REPEATABLE READ", "SERIALIZABLE"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "MySQL 主从复制基于什么日志实现？",
+    "gold_phrases": ["二进制日志", "binlog"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "RRF 倒数秩融合的原理是什么？",
+    "gold_phrases": ["倒数秩融合", "1/(k + rank + 1)"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "RAG 系统常用的评估指标有哪些？",
+    "gold_phrases": ["忠实度", "上下文召回率", "上下文精确率"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "Milvus 的架构包含哪些组件？",
+    "gold_phrases": ["存算分离架构", "元数据存储（etcd）"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "什么是 HNSW 索引？",
+    "gold_phrases": ["分层可导航小世界图", "贪心向下导航"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "Python 装饰器的作用是什么？",
+    "gold_phrases": ["接受函数返回函数的高阶函数", "functools.wraps"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "LangChain 的 LCEL 是什么？",
+    "gold_phrases": ["管道操作符", "RunnablePassthrough"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "LangChain 有哪些文档加载器？",
+    "gold_phrases": ["PyMuPDFLoader", "Docx2txtLoader", "TextLoader"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "什么是向量数据库？它和关系型数据库有什么区别？",
+    "gold_phrases": ["近似最近邻（Approximate Nearest Neighbor", "暴力扫描百万级向量"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "Linux 文件权限分哪几级？",
+    "gold_phrases": ["读（r）", "写（w）", "执行（x）"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "LangChain 中 ConversationBufferWindowMemory 的作用是什么？",
+    "gold_phrases": ["窗口记忆", "只保留最近"]
+  },
+  {
+    "level": "A_事实单跳",
+    "question": "RAG 的完整流程包括哪几步？",
+    "gold_phrases": ["文档加载器", "文本分割器", "嵌入+向量存储"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "text-embedding-v4 的向量维度是多少？",
+    "gold_phrases": ["1024 维", "Qwen3-Embedding"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "Milvus 支持哪些向量索引类型？",
+    "gold_phrases": ["IVF_FLAT", "HNSW", "SPARSE_INVERTED_INDEX"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "Python 的 GIL 是什么？对多线程有什么影响？",
+    "gold_phrases": ["全局解释器锁", "无法加速 CPU 计算"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "Python asyncio 适合什么场景？",
+    "gold_phrases": ["事件循环（event loop）", "异步 I/O 框架"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "Linux 中查看进程状态的命令有哪些？",
+    "gold_phrases": ["ps、top、htop"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "chmod 755 代表什么权限？",
+    "gold_phrases": ["rwxr-xr-x"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "什么是 SUID 特殊权限？",
+    "gold_phrases": ["Set User ID", "谁运行它，它就拥有文件所有者的权限"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "什么是 Sticky Bit？",
+    "gold_phrases": ["Sticky Bit", "1777"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "Linux 中僵尸进程是怎么产生的？",
+    "gold_phrases": ["僵尸进程", "STAT=Z"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "grep 和 sed 分别用于什么场景？",
+    "gold_phrases": ["文本搜索", "流编辑器"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "什么是扩展正则表达式 ERE？",
+    "gold_phrases": ["扩展正则", "ERE"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "LangChain 如何接入本地 Ollama 模型？",
+    "gold_phrases": ["Ollama", "OllamaLLM"]
+  },
+  {
+    "level": "B_术语/缩写",
+    "question": "RunnablePassthrough 的作用是什么？",
+    "gold_phrases": ["透传数据", "原样传递"]
+  },
+  {
+    "level": "C_语义改写",
+    "question": "数据库查询越来越慢，怎么查看执行计划定位问题？",
+    "gold_phrases": ["EXPLAIN 命令", "执行计划"]
+  },
+  {
+    "level": "C_语义改写",
+    "question": "程序处理大数据时内存占用过高，有什么省内存的写法？",
+    "gold_phrases": ["惰性求值", "逐个产生数据"]
+  },
+  {
+    "level": "C_语义改写",
+    "question": "想给大量文档做语义检索，怎么把文本变成向量？",
+    "gold_phrases": ["嵌入模型", "embed"]
+  },
+  {
+    "level": "C_语义改写",
+    "question": "日志文件很大，怎么快速找出包含 error 的行？",
+    "gold_phrases": ["grep", "正则表达式"]
+  },
+  {
+    "level": "C_语义改写",
+    "question": "同一段对话想记住之前的上下文，用什么方法？",
+    "gold_phrases": ["记忆模块", "Memory"]
+  },
+  {
+    "level": "C_语义改写",
+    "question": "对话历史太长，怎么压缩记忆避免上下文超限？",
+    "gold_phrases": ["摘要", "ConversationSummaryMemory"]
+  },
+  {
+    "level": "C_语义改写",
+    "question": "想把 PDF 里的内容做成可以提问的知识库，第一步该做什么？",
+    "gold_phrases": ["文档加载器", "文本分割"]
+  },
+  {
+    "level": "C_语义改写",
+    "question": "多用户共用服务器，怎么限制普通用户只能读不能改系统配置？",
+    "gold_phrases": ["权限", "sudo"]
+  },
+  {
+    "level": "D_多跳/跨文档",
+    "question": "Milvus 里怎么实现混合检索？需要哪些组件配合？",
+    "gold_phrases": ["稀疏向量", "稠密向量", "RRF"]
+  },
+  {
+    "level": "D_多跳/跨文档",
+    "question": "LangChain 完整 RAG 应用需要哪些组件串联？",
+    "gold_phrases": ["Retriever", "Prompt", "向量存储"]
+  },
+  {
+    "level": "D_多跳/跨文档",
+    "question": "Linux 上想定时备份文件并压缩日志，涉及哪些命令和机制？",
+    "gold_phrases": ["crontab", "tar", "gzip"]
+  },
+  {
+    "level": "D_多跳/跨文档",
+    "question": "如何用向量数据库和 LangChain 搭建企业知识库问答？",
+    "gold_phrases": ["Chroma", "Retriever", "向量存储"]
+  },
+  {
+    "level": "D_多跳/跨文档",
+    "question": "Agentic RAG 和朴素 RAG 在流程上有什么区别？",
+    "gold_phrases": ["改写查询重新检索", "文档评分"]
+  },
+  {
+    "level": "D_多跳/跨文档",
+    "question": "用 Fork 创建多进程并行处理任务，怎么避免僵尸进程？",
+    "gold_phrases": ["wait()", "僵尸进程"]
+  },
+  {
+    "level": "E_易混淆",
+    "question": "RAG 的评估指标里，忠实度和上下文召回率分别衡量什么？",
+    "gold_phrases": ["忠实度", "上下文召回率"]
+  },
+  {
+    "level": "E_易混淆",
+    "question": "稠密检索和稀疏检索各有什么优势和劣势？",
+    "gold_phrases": ["语义层面的关联", "精确的关键词匹配"]
+  },
+  {
+    "level": "E_易混淆",
+    "question": "IVF_FLAT 和 HNSW 索引有什么区别？",
+    "gold_phrases": ["K-means 聚类", "分层可导航小世界图"]
+  },
+  {
+    "level": "E_易混淆",
+    "question": "ConversationBufferMemory 和 ConversationSummaryMemory 的区别？",
+    "gold_phrases": ["完整历史", "摘要"]
+  },
+  {
+    "level": "E_易混淆",
+    "question": "awk 和 sed 都是文本处理工具，应用场景有什么不同？",
+    "gold_phrases": ["流编辑器（Stream Editor）", "文本分析瑞士军刀"]
+  },
+  {
+    "level": "E_易混淆",
+    "question": "稠密向量和稀疏向量在向量数据库里存储方式有什么不同？",
+    "gold_phrases": ["FLOAT_VECTOR", "SPARSE_FLOAT_VECTOR"]
+  },
+  {
+    "level": "E_易混淆",
+    "question": "LLM 的知识截止和幻觉问题，RAG 分别怎么解决？",
+    "gold_phrases": ["检索", "幻觉"]
+  }
+]

@@ -1,8 +1,11 @@
 from SmartQuery.backend.config import MYSQL_HOST,MYSQL_PORT,MYSQL_USER,MYSQL_PASSWORD,MYSQL_DATABASE
+from SmartQuery.backend.logger import get_logger
 from sqlalchemy import create_engine,Column,Integer,String,Text,DateTime
 from sqlalchemy.orm import sessionmaker,declarative_base
 #sessionmaker 用于生成 Session 类（或会话工厂）。Session 是 ORM 中与数据库进行交互的“工作单元”，负责管理对象的持久化操作（增删改查）、事务边界等。
 from datetime import datetime
+
+logger = get_logger(__name__)
 
 DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}?charset=utf8mb4"
 #构造一个符合 SQLAlchemy 规范的数据库连接 URL 字符串。
@@ -25,6 +28,7 @@ class ChatRecord(Base):
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    logger.info("mysql tables ready")
 
 def save_record(session_id: str, question: str, answer: str):
     db = SessionLocal()
@@ -47,3 +51,46 @@ def get_history(session_id: str) -> list[dict]:
         {"question": r.question, "answer": r.answer, "created_at": str(r.created_at)}
         for r in records
     ]
+
+
+# ---------------- 文件注册表（重复入库检测）---------------- #
+
+class UploadedFile(Base):
+    """已入库文件登记表：以文件内容 SHA-256 哈希为唯一标识，防止重复入库"""
+    __tablename__ = "uploaded_files"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    file_hash = Column(String(64), unique=True, index=True, nullable=False)  # 内容哈希
+    filename = Column(String(255), nullable=False)
+    partition = Column(String(16), nullable=False)          # 入库分区（pdf/docx/txt/md）
+    chunk_count = Column(Integer, nullable=False, default=0)  # 入库块数
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+def find_file_by_hash(file_hash: str) -> dict | None:
+    """按内容哈希查文件，已入库返回记录，否则返回 None"""
+    db = SessionLocal()
+    try:
+        row = db.query(UploadedFile).filter(UploadedFile.file_hash == file_hash).first()
+        if row is None:
+            return None
+        return {
+            "file_hash": row.file_hash,
+            "filename": row.filename,
+            "partition": row.partition,
+            "chunk_count": row.chunk_count,
+            "created_at": str(row.created_at),
+        }
+    finally:
+        db.close()
+
+
+def save_file_record(file_hash: str, filename: str, partition: str, chunk_count: int):
+    """记录一条已入库文件"""
+    db = SessionLocal()
+    try:
+        db.add(UploadedFile(file_hash=file_hash, filename=filename,
+                            partition=partition, chunk_count=chunk_count))
+        db.commit()
+    finally:
+        db.close()
