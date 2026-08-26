@@ -1,15 +1,16 @@
-from SmartQuery.backend.config import QWEN_EMBEDDING_MODEL, QWEN_API_KEY, QWEN_BASE_URL  #注意导config的方式
+from SmartQuery.backend.config import QWEN_API_KEY, QWEN_BASE_URL
 from langchain_openai import OpenAIEmbeddings
 from FlagEmbedding import BGEM3FlagModel
 
 
 # 兼容模式
 embeddings = OpenAIEmbeddings(
-    model=QWEN_EMBEDDING_MODEL,
+    model="qwen3.7-text-embedding",
     api_key=QWEN_API_KEY,
     base_url=QWEN_BASE_URL,
-    check_embedding_ctx_length=False,  # 禁用 LangChain 文本预处理，否则 DashScope 兼容模式报 input.contents 错误
-    chunk_size=10,  # text-embedding-v4 单次最多 10 条，超过会报 batch size invalid
+    check_embedding_ctx_length=False,
+    chunk_size=20,  # qwen3.7-text-embedding 单次最多 20 条
+    dimensions=2048,  # 指定输出维度
 )
 
 """

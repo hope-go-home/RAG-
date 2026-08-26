@@ -29,9 +29,9 @@ def _should_render(key: str, interval: float = 0.3) -> bool:
 
 # ------------------ 页面配置 ------------------ #
 
-st.set_page_config(page_title="Agentic RAG", layout="wide")
-st.title("Agentic RAG - 专业知识智能问答系统")
-st.caption("LangGraph Agentic RAG · 混合检索（稠密 + 稀疏）+ 文档评分 + 幻觉检查")
+st.set_page_config(page_title="RAG 智能问答", layout="wide")
+st.title("RAG - 专业知识智能问答系统")
+st.caption("LangGraph · 混合检索（稠密 + 稀疏）+ Rerank 重排序")
 
 # ------------------ 双栏布局 ------------------ #
 
@@ -171,34 +171,23 @@ with right_col:
                             )
                         sources_area.markdown("\n\n---\n".join(cards))
 
-                # --- 文档评分（与 sources 共用占位符，节流渲染） ---
-                elif etype == "grades":
-                    grades = event.get("grades", [])
-                    need = event.get("need_retrieve", False)
-                    gs = []
-                    for g in grades:
-                        gs.append(f"{'[PASS]' if g.get('relevance',0)>=3 else '[DROP]'} 文档{g.get('doc_index','?')} 相关度{g.get('relevance','?')}/5：{g.get('reason','')}")
-                    if need:
-                        gs.append(" 相关文档不足，触发重检...")
-                    if _should_render("grades"):
-                        sources_area.markdown("\n\n".join(gs))
-
-                # --- 反思（节流渲染） ---
-                elif etype == "reflection":
-                    thinking_log.append(f"[Reflect] {event.get('issues', '无问题')}（完整度 {event.get('completeness_score', '?')}/5）")
-                    if _should_render("reflection"):
-                        thinking_area.markdown("\n\n".join(thinking_log))
+                # --- token 级流式：逐步拼接显示 ---
+                elif etype == "token":
+                    full_answer += event.get("content", "")
+                    if _should_render("answer_stream", interval=0.1):
+                        answer_placeholder.markdown(full_answer + " ")
 
                 # --- 最终答案（非流式兼容：直接展示完整答案） ---
                 elif etype == "answer":
-                    full_answer = event.get("answer", "")
+                    full_answer = event.get("answer", "") or full_answer
                     answer_placeholder.markdown(full_answer)
 
                 # --- 完成（去掉光标，持久化消息；强制渲染被节流跳过的最后状态） ---
                 elif etype == "done":
                     thinking_area.markdown("\n\n".join(thinking_log))
-                    answer_placeholder.markdown(full_answer if full_answer else "（未生成回答）")
-                    st.session_state.messages.append({"role": "assistant", "content": full_answer})
+                    final_answer = full_answer if full_answer and full_answer.strip() else "抱歉，无法生成回答。请尝试换一种方式提问。"
+                    answer_placeholder.markdown(final_answer)
+                    st.session_state.messages.append({"role": "assistant", "content": final_answer})
 
                 # --- 错误 ---
                 elif etype == "error":

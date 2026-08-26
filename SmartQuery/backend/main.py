@@ -1,6 +1,7 @@
 import json
 import hashlib
 import time
+import threading
 from fastapi import FastAPI, UploadFile, File, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -18,6 +19,7 @@ from SmartQuery.rag.ingest import ingest_file, get_partition
 logger = get_logger(__name__)
 
 UPLOAD_DIR = "data/docs"
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 app = FastAPI(title="Agentic RAG")
 app.include_router(health_router)
@@ -49,6 +51,8 @@ async def access_log(request: Request, call_next):
         raise
 
 session_contexts = {}   # 存储每个 session 的上下文 + 对话历史，用于多轮对话
+session_locks = {}      # 每个 session 的锁
+session_locks_global = threading.Lock()  # 全局锁（保护 session_locks 字典）
 
 
 # ------------------ 请求模型 ------------------ #
@@ -102,8 +106,7 @@ async def chat_stream(request: ChatRequest):
     async def event_generator():
         accumulated = {}  # 累积所有节点的输出，避免后一节点覆盖前一节点的字段
         in_answer = False  # 只在 generate/direct_answer 节点中推送 token
-        NODES = {"query_analysis", "retrieve", "grade_documents", "rewrite_query",
-                 "generate", "reflect", "direct_answer"}
+        NODES = {"query_analysis", "retrieve", "generate", "direct_answer"}
         try:
             async for event in rag_agent.astream_events(initial_state, version="v2"):
                 kind = event["event"]
@@ -140,16 +143,10 @@ async def chat_stream(request: ChatRequest):
                     if stats:
                         yield _sse("stats", stats)
 
-                    grades = output.get("document_grades")
-                    if grades:
-                        yield _sse("grades", {"grades": grades, "need_retrieve": output.get("need_retrieve", False)})
-
-                    reflection = output.get("reflection_result")
-                    if reflection:
-                        yield _sse("reflection", reflection)
-
-            # 从累积状态取答案（generate 节点产出，不会被 reflect 覆盖）
+            # 从累积状态取答案（generate 节点产出）
             answer = accumulated.get("answer", "")
+            if not answer or not answer.strip():
+                answer = "抱歉，无法生成回答。请尝试换一种方式提问。"
             yield _sse("answer", {"answer": answer})
 
             _persist_session(sid, request.question, accumulated)
@@ -185,10 +182,20 @@ def _file_sha256(path: str) -> str:
 
 
 @app.post("/upload")
-def upload(files: list[UploadFile] = File(...)):
+async def upload(files: list[UploadFile] = File(...)):
     results = []
     logger.info("upload start files=%d", len(files))
     for file in files:
+        # 检查文件大小
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            results.append({
+                "file": file.filename,
+                "status": "failed",
+                "message": f"文件大小超过限制（{len(content) // 1024 // 1024}MB > 10MB）"
+            })
+            continue
+
         ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
         if ext not in SUPPORTED_EXTS:
             logger.warning("upload reject unsupported ext=%s file=%s", ext, file.filename)
@@ -197,7 +204,7 @@ def upload(files: list[UploadFile] = File(...)):
 
         save_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4().hex}.{ext}")
         with open(save_path, "wb") as f:
-            f.write(file.file.read())
+            f.write(content)  # 使用已读取的内容
 
         file_hash = _file_sha256(save_path)
         existing = find_file_by_hash(file_hash)
@@ -243,28 +250,43 @@ def history(session_id: str):
 def _build_initial_state(sid: str, question: str) -> dict:
     """构建 Agent 初始状态，复用已有 session 的上下文"""
     state: dict = {"question": question}
-    if sid in session_contexts:
-        ctx = session_contexts[sid]
-        state["context"] = ctx.get("context", [])
-        state["chat_history"] = ctx.get("history", [])
+
+    # 获取或创建 session 锁
+    with session_locks_global:
+        if sid not in session_locks:
+            session_locks[sid] = threading.Lock()
+        lock = session_locks[sid]
+
+    with lock:
+        if sid in session_contexts:
+            ctx = session_contexts[sid]
+            state["context"] = ctx.get("context", [])
+            state["chat_history"] = ctx.get("history", [])
     return state
 
 
 def _persist_session(sid: str, question: str, result: dict):
     """持久化 session 上下文 + 聊天记录"""
     answer = result.get("answer", "")
-    # 更新内存中的 session 上下文
-    # 新 Agent 用 relevant_docs 作为下次的 context，比原始 context 更精准
-    docs = result.get("relevant_docs") or result.get("context") or []
-    history = session_contexts.get(sid, {}).get("history", [])
-    history.extend([
-        {"role": "user", "content": question},
-        {"role": "assistant", "content": answer},
-    ])
-    session_contexts[sid] = {
-        "context": docs,
-        "history": history[-20:],  # 最多保留 20 轮
-    }
+
+    # 获取或创建 session 锁
+    with session_locks_global:
+        if sid not in session_locks:
+            session_locks[sid] = threading.Lock()
+        lock = session_locks[sid]
+
+    with lock:
+        # 更新内存中的 session 上下文
+        docs = result.get("context") or []
+        history = session_contexts.get(sid, {}).get("history", [])
+        history.extend([
+            {"role": "user", "content": question},
+            {"role": "assistant", "content": answer},
+        ])
+        session_contexts[sid] = {
+            "context": docs,
+            "history": history[-20:],  # 最多保留 20 轮
+        }
     # 存 MySQL
     from SmartQuery.backend.database.mysql import save_record
     save_record(sid, question, answer)

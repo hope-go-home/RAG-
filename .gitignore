@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 SmartQuery/model/.cache/
 data/docs/*
+logs/*.log

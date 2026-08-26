@@ -1,5 +1,4 @@
 import json
-import os
 from typing import TypedDict
 from SmartQuery.rag.retriever import retrieve_with_meta, RetrievalResult
 from SmartQuery.backend.logger import get_logger
@@ -16,26 +15,17 @@ logger = get_logger(__name__)
 # ==================== State 定义 ====================
 
 class GraphState(TypedDict):
-    # ------ 核心字段（保留原有）------
+    # ------ 核心字段 ------
     question: str               # 用户原始问题
     context: list[str]          # 检索到的父块文档列表
     answer: str                 # LLM 生成的回答
     intent: str                 # 意图分类：rag_query / chit_chat / meta / follow_up
     chat_history: list[dict]    # 多轮对话历史 [{role, content}, ...]
 
-    # ------ Agentic 迭代控制 ------
-    rewritten_questions: list[str]  # 改写过的搜索词链，记录每次重检用了什么 query
+    # ------ 检索控制 ------
     retrieval_count: int            # 已经检索了几次
-    max_retrieval_attempts: int     # 最大检索次数，默认 3，防止无限循环
+    max_retrieval_attempts: int     # 最大检索次数，默认 1（简化后）
     need_retrieve: bool             # 文档评分不足时置为 True，触发重检
-
-    # ------ 文档评判 ------
-    document_grades: list[dict]     # [{doc_index, relevance, reason}, ...] LLM 对每篇文档的打分
-    relevant_docs: list[str]        # 相关性 >= 阈值的文档文本
-    irrelevant_docs: list[str]      # 低于阈值的文档（诊断用）
-
-    # ------ 反思 ------
-    reflection_result: dict         # {has_issues, issues, completeness_score}
 
     # ------ 前端可见 ------
     thinking_steps: list[dict]      # [{node, status, info}, ...] 前端思考面板展示
@@ -51,15 +41,6 @@ llm = ChatOpenAI(
     base_url=QWEN_BASE_URL,
 )
 
-# 轻量模型：文档打分、查询改写、反思检查
-# 优先使用环境变量 SMALL_MODEL，否则回退到主模型（避免模型名无效导致静默失败）
-SMALL_MODEL = os.getenv("SMALL_MODEL", QWEN_MODEL)
-small_llm = ChatOpenAI(
-    model=SMALL_MODEL,
-    api_key=QWEN_API_KEY,
-    base_url=QWEN_BASE_URL,
-)
-
 
 # ==================== 工具函数 ====================
 
@@ -68,11 +49,6 @@ def safe_llm_invoke(messages):
     """带重试的 LLM 调用"""
     return llm.invoke(messages)
 
-
-@retry(stop=stop_after_attempt(2), wait=wait_exponential(min=1, max=3))
-def safe_small_llm_invoke(messages):
-    """带重试的小模型调用"""
-    return small_llm.invoke(messages)
 
 
 def _format_history(history: list[dict], max_turns: int = 6) -> str:
@@ -130,26 +106,18 @@ def query_analysis_node(state: GraphState) -> dict:
         )).content.strip()
         parsed = _safe_json_parse(result, {"intent": "rag_query"})
         intent = parsed.get("intent", "rag_query")
-        search_query = parsed.get("search_query", state["question"])
-        sub_questions = parsed.get("sub_questions", [])
     except Exception:
         intent = "rag_query"
-        search_query = state["question"]
-        sub_questions = []
         logger.warning("query_analysis fallback to default for question=%s", state["question"][:80])
 
-    logger.info("query_analysis intent=%s search_query=%s", intent, search_query[:80])
+    logger.info("query_analysis intent=%s", intent)
 
-    # 记录思考过程
     step = {"node": "query_analysis", "status": "done", "info": f"意图：{intent}"}
-    if search_query != state["question"]:
-        step["info"] += f"，搜索词：{search_query}"
 
     return {
         "intent": intent,
-        "rewritten_questions": [search_query],
-        "max_retrieval_attempts": 3,
         "retrieval_count": 0,
+        "max_retrieval_attempts": 1,
         "need_retrieve": True,
         "thinking_steps": state.get("thinking_steps", []) + [step],
     }
@@ -159,8 +127,7 @@ def query_analysis_node(state: GraphState) -> dict:
 # 使用 retrieve_with_meta 获取带元数据的结果，供前端展示和文档评分使用
 
 def retrieve_node(state: GraphState) -> dict:
-    # 取最新的改写搜索词
-    search_query = state.get("rewritten_questions", [state["question"]])[-1]
+    search_query = state["question"]
     result: RetrievalResult = retrieve_with_meta(search_query, top_k=10)
     count = state.get("retrieval_count", 0) + 1
 
@@ -175,22 +142,27 @@ def retrieve_node(state: GraphState) -> dict:
             "rerank_score": s.rerank_score,
         })
 
+    # 使用 reranker 分数阈值判断是否需要重检（简化，不再用 LLM 打分）
+    max_rerank_score = max([s.rerank_score for s in result.sources]) if result.sources else 0.0
+    RERANK_THRESHOLD = 0.5  # reranker 分数阈值
+    need_retrieve = max_rerank_score < RERANK_THRESHOLD
+
     step = {
         "node": "retrieve",
         "status": "done",
-        "info": f"第 {count} 次检索：稠密命中 {result.dense_hit_count}，稀疏命中 {result.sparse_hit_count}，融合得 {result.fused_count} 篇，返回 {len(result.documents)} 篇",
+        "info": f"第 {count} 次检索：稠密命中 {result.dense_hit_count}，稀疏命中 {result.sparse_hit_count}，融合得 {result.fused_count} 篇，返回 {len(result.documents)} 篇，最高 rerank 分数 {max_rerank_score:.3f}",
     }
     logger.info(
-        "retrieve count=%d query=%s dense=%d sparse=%d fused=%d returned=%d",
+        "retrieve count=%d query=%s dense=%d sparse=%d fused=%d returned=%d max_rerank=%.3f",
         count, search_query[:60], result.dense_hit_count, result.sparse_hit_count,
-        result.fused_count, len(result.documents),
+        result.fused_count, len(result.documents), max_rerank_score,
     )
 
     return {
         "context": result.documents,
         "retrieval_sources": sources_for_ui,
         "retrieval_count": count,
-        # 检索统计（稠密命中数 / 稀疏命中数 / 融合后数量），前端链路面板展示
+        "need_retrieve": need_retrieve,
         "retrieval_stats": {
             "dense_hits": result.dense_hit_count,
             "sparse_hits": result.sparse_hit_count,
@@ -205,7 +177,7 @@ def retrieve_node(state: GraphState) -> dict:
 # 闲聊 / 系统询问时直接回答，不触发检索
 
 DIRECT_PROMPT = ChatPromptTemplate.from_template("""
-你是 Agentic RAG 智能问答助手，基于 LangGraph 构建，支持混合检索（稠密+稀疏）和 Agentic 自省。
+你是 Agentic RAG 智能问答助手，基于 LangGraph 构建，支持混合检索（稠密+稀疏）。
 
 对话历史：
 {chat_history}
@@ -219,147 +191,19 @@ def direct_answer_node(state: GraphState) -> dict:
     answer = llm.invoke(DIRECT_PROMPT.format_messages(
         chat_history=history_str, question=state["question"]
     ))
+
+    if not answer.content or not answer.content.strip():
+        answer = "抱歉，我无法回答该问题。请尝试换一种方式提问。"
+
     step = {"node": "direct_answer", "status": "done", "info": "闲聊/系统询问，直接回答"}
     return {
-        "answer": answer.content,
+        "answer": answer.content if hasattr(answer, 'content') else str(answer),
         "thinking_steps": state.get("thinking_steps", []) + [step],
     }
 
 
-# ==================== 节点 4：grade_documents ====================
-# Agentic 核心决策节点：LLM 逐篇评判文档与问题的相关性
-# 得分不足 → 触发 rewrite_query 重检
-# 得分足够 → 进入 generate 生成答案
-
-GRADE_PROMPT = ChatPromptTemplate.from_template("""评估以下文档与用户问题的相关性，输出 JSON 数组。
-
-用户问题：{question}
-
-文档列表：
-{documents}
-
-对每篇文档评分（1-5）并说明理由。仅输出 JSON 数组（不要 markdown 包裹）：
-[{{"doc_index": 0, "relevance": 4, "reason": "提到了相关技能"}}, ...]""")
-
-
-def grade_documents_node(state: GraphState) -> dict:
-    context = state.get("context", [])
-    if not context:
-        return {
-            "document_grades": [],
-            "relevant_docs": [],
-            "irrelevant_docs": [],
-            "need_retrieve": state.get("retrieval_count", 0) < state.get("max_retrieval_attempts", 3),
-            "thinking_steps": state.get("thinking_steps", []) + [
-                {"node": "grade_documents", "status": "done", "info": "无文档可评分"}
-            ],
-        }
-
-    # 合并文档列表为文本，每篇给编号
-    docs_text = "\n\n".join(f"[{i}] {doc[:400]}" for i, doc in enumerate(context))
-
-    # 打分失败（调用异常 / 输出无法解析）时：不假造"全部通过"，
-    # 显式标记 grade_failed，让检索结果不被采信，走重检或保守降级
-    grade_failed = False
-    grade_fail_reason = ""
-    try:
-        result = safe_small_llm_invoke(GRADE_PROMPT.format_messages(
-            question=state["question"], documents=docs_text
-        )).content.strip()
-        grades = _safe_json_parse(result, [])
-        if not isinstance(grades, list):
-            grades = []
-            grade_failed = True
-            grade_fail_reason = "输出格式异常，无法解析"
-    except Exception as e:
-        grades = []
-        grade_failed = True
-        grade_fail_reason = f"评分调用异常: {e}"
-
-    # 按相关性分档
-    threshold = 3  # 1-5 分制，>=3 为相关
-    relevant, irrelevant = [], []
-    for g in grades:
-        idx = g.get("doc_index", 0)
-        if idx < len(context):
-            if g.get("relevance", 3) >= threshold:
-                relevant.append(context[idx])
-            else:
-                irrelevant.append(context[idx])
-
-    need = (len(relevant) < 2) or grade_failed  # 评分失败等同无法确认相关
-    max_attempts = state.get("max_retrieval_attempts", 3)
-    retrieval_count = state.get("retrieval_count", 0)
-    if need and retrieval_count >= max_attempts:
-        need = False  # 已达最大重试次数，保守降级：全量 context 生成 + reflect 兜底
-
-    logger.info(
-        "grade_documents relevant=%d irrelevant=%d need_retrieve=%s attempt=%d/%d",
-        len(relevant), len(irrelevant), need, retrieval_count, max_attempts,
-    )
-
-    step = {
-        "node": "grade_documents",
-        "status": "done",
-        "info": f"相关 {len(relevant)} 篇 / 不相关 {len(irrelevant)} 篇 → {'需要重检' if need else '进入生成'}",
-    }
-    if grade_failed:
-        step["info"] += f"（评分{grade_fail_reason}，结果未采信，已保守降级）"
-
-    return {
-        "document_grades": grades,
-        "relevant_docs": relevant,
-        "irrelevant_docs": irrelevant,
-        "need_retrieve": need,
-        "thinking_steps": state.get("thinking_steps", []) + [step],
-    }
-
-
-# ==================== 节点 5：rewrite_query ====================
-# 检索不理想时，LLM 分析失败原因并生成更好的搜索词
-
-REWRITE_PROMPT = ChatPromptTemplate.from_template("""你是一个搜索优化助手。
-
-用户原始问题：{question}
-已尝试的搜索词：{previous_queries}
-检索结果中不相关文档示例：{irrelevant_samples}
-
-请生成一个不同的、更精准的搜索词。要求：
-- 换一个角度或关键词
-- 如果之前的词太宽泛就加具体限定，如果太窄就放宽
-- 避免之前失败的搜索方向
-
-仅输出新搜索词（纯文本，不要 JSON 包裹）：""")
-
-
-def rewrite_query_node(state: GraphState) -> dict:
-    previous = state.get("rewritten_questions", [])
-    irrelevant = state.get("irrelevant_docs", [])
-    samples = "\n".join(d[:200] for d in irrelevant[:3]) if irrelevant else "（无）"
-
-    try:
-        result = safe_small_llm_invoke(REWRITE_PROMPT.format_messages(
-            question=state["question"],
-            previous_queries=", ".join(previous),
-            irrelevant_samples=samples,
-        )).content.strip()
-        new_query = result or state["question"]
-    except Exception:
-        new_query = state["question"]
-        logger.warning("rewrite_query fallback to original question=%s", state["question"][:60])
-
-    previous.append(new_query)
-    logger.info("rewrite_query new=%s previous=%s", new_query[:60], ", ".join(previous[:-1])[:80])
-    step = {"node": "rewrite_query", "status": "done", "info": f"新搜索词：{new_query}"}
-
-    return {
-        "rewritten_questions": previous,
-        "thinking_steps": state.get("thinking_steps", []) + [step],
-    }
-
-
-# ==================== 节点 6：generate ====================
-# 基于相关文档生成答案，优先用评分通过的 relevant_docs
+# ==================== 节点 4：generate ====================
+# 基于检索到的文档生成答案
 
 GEN_PROMPT = ChatPromptTemplate.from_template("""基于以下资料和对话历史回答问题。
 
@@ -378,81 +222,28 @@ gen_chain = GEN_PROMPT | llm | StrOutputParser()
 
 
 def generate_node(state: GraphState) -> dict:
-    # 优先使用评分通过的文档，没有则使用全量 context
-    docs = state.get("relevant_docs") or state.get("context", [])
+    docs = state.get("context", [])
     history_str = _format_history(state.get("chat_history", []), max_turns=6)
-    retrieval_count = state.get("retrieval_count", 0)
-    max_attempts = state.get("max_retrieval_attempts", 3)
 
-    # 多次检索仍不充分时，在 prompt 中加免责提示
     context_text = "\n\n".join(docs)
-    if retrieval_count >= max_attempts and len(docs) < 2:
-        context_text = f"（注意：多次检索未找到充分资料，以下信息可能不完整）\n\n{context_text}"
 
     answer = gen_chain.invoke({
         "context": context_text,
         "chat_history": history_str,
         "question": state["question"],
     })
+
+    if not answer or not answer.strip():
+        if not docs:
+            answer = "抱歉，未检索到相关资料，无法回答该问题。请尝试换一种方式提问。"
+        else:
+            answer = "抱歉，基于现有资料无法生成完整回答。请尝试换一种方式提问。"
+
     logger.info("generate docs=%d answer_len=%d", len(docs), len(answer))
 
     step = {"node": "generate", "status": "done", "info": f"基于 {len(docs)} 篇文档生成回答"}
     return {
         "answer": answer,
-        "thinking_steps": state.get("thinking_steps", []) + [step],
-    }
-
-
-# ==================== 节点 7：reflect ====================
-# 幻觉检查：LLM 对比答案与源文档，发现无依据的声明则标记问题
-
-REFLECT_PROMPT = ChatPromptTemplate.from_template("""你是事实核验员。请对比以下回答与源文档。
-
-问题：{question}
-
-回答：
-{answer}
-
-源文档：
-{context}
-
-检查：
-1. 回答中是否有源文档无法支持的声明？（幻觉）
-2. 源文档中的重要信息是否被遗漏？
-3. 整体完整度评分（1-5）
-
-仅输出 JSON（不要 markdown 包裹）：
-{{"has_issues": true/false, "issues": "描述", "completeness_score": 1-5}}""")
-
-
-def reflect_node(state: GraphState) -> dict:
-    docs = state.get("relevant_docs") or state.get("context", [])
-    if not docs or not state.get("answer"):
-        step = {"node": "reflect", "status": "done", "info": "跳过：无文档或无答案"}
-        return {
-            "reflection_result": {"has_issues": False, "issues": "", "completeness_score": 3},
-            "thinking_steps": state.get("thinking_steps", []) + [step],
-        }
-
-    try:
-        result = safe_small_llm_invoke(REFLECT_PROMPT.format_messages(
-            question=state["question"],
-            answer=state["answer"],
-            context="\n\n".join(docs),
-        )).content.strip()
-        reflection = _safe_json_parse(result, {"has_issues": False, "issues": "", "completeness_score": 4})
-    except Exception:
-        reflection = {"has_issues": False, "issues": "反思检查异常，跳过", "completeness_score": 3}
-
-    has_issues = reflection.get("has_issues", False)
-    step = {
-        "node": "reflect",
-        "status": "done",
-        "info": f"{'发现问题' if has_issues else '无问题'}，完整度 {reflection.get('completeness_score', '?')}/5",
-    }
-
-    return {
-        "reflection_result": reflection,
         "thinking_steps": state.get("thinking_steps", []) + [step],
     }
 
@@ -467,27 +258,6 @@ def route_after_analysis(state: GraphState) -> str:
     return "retrieve"  # rag_query / follow_up 都走检索
 
 
-def route_after_grade(state: GraphState) -> str:
-    """grade_documents 之后的决策"""
-    if state.get("need_retrieve", False):
-        retrieval_count = state.get("retrieval_count", 0)
-        max_attempts = state.get("max_retrieval_attempts", 3)
-        if retrieval_count < max_attempts:
-            return "rewrite_query"
-        # 达到最大次数，强制生成
-    return "generate"
-
-
-def route_after_reflect(state: GraphState) -> str:
-    """reflect 之后：有严重幻觉且是第一次反思则重新生成"""
-    reflection = state.get("reflection_result", {})
-    has_issues = reflection.get("has_issues", False)
-    completeness = reflection.get("completeness_score", 5)
-    if has_issues and completeness <= 2:
-        return "generate"  # 带着反思意见重新生成
-    return "END"
-
-
 # ==================== 构建工作流 ====================
 
 workflow = StateGraph(GraphState)
@@ -495,10 +265,7 @@ workflow = StateGraph(GraphState)
 # 注册节点
 workflow.add_node("query_analysis", query_analysis_node)
 workflow.add_node("retrieve", retrieve_node)
-workflow.add_node("grade_documents", grade_documents_node)
-workflow.add_node("rewrite_query", rewrite_query_node)
 workflow.add_node("generate", generate_node)
-workflow.add_node("reflect", reflect_node)
 workflow.add_node("direct_answer", direct_answer_node)
 
 # 边
@@ -510,23 +277,8 @@ workflow.add_conditional_edges(
     {"retrieve": "retrieve", "direct_answer": "direct_answer"},
 )
 
-workflow.add_edge("retrieve", "grade_documents")
-
-workflow.add_conditional_edges(
-    "grade_documents",
-    route_after_grade,
-    {"rewrite_query": "rewrite_query", "generate": "generate"},
-)
-
-workflow.add_edge("rewrite_query", "retrieve")  # 循环回检索
-workflow.add_edge("generate", "reflect")
-
-workflow.add_conditional_edges(
-    "reflect",
-    route_after_reflect,
-    {"generate": "generate", "END": END},
-)
-
+workflow.add_edge("retrieve", "generate")
+workflow.add_edge("generate", END)
 workflow.add_edge("direct_answer", END)
 
 app = workflow.compile()  # 编译成可执行应用

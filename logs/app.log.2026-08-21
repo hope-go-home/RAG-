@@ -1,0 +1,656 @@
+2026-08-21 12:24:58 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/agent-harnesses "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:25:02 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:25:02 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/tokenizer_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:25:02 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:25:04 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 12:25:04 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:25:04 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 12:25:07 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3 "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:25:07 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3 "HTTP/1.1 200 OK"
+2026-08-21 12:25:07 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:25:08 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 200 OK"
+2026-08-21 12:25:09 | INFO    | FlagEmbedding.finetune.embedder.encoder_only.m3.runner | loading existing colbert_linear and sparse_linear---------
+2026-08-21 12:26:26 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/agent-harnesses "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:29 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:29 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/tokenizer_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:29 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:31 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 12:26:31 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:31 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 12:26:34 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3 "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:34 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3 "HTTP/1.1 200 OK"
+2026-08-21 12:26:34 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:35 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 200 OK"
+2026-08-21 12:26:35 | INFO    | FlagEmbedding.finetune.embedder.encoder_only.m3.runner | loading existing colbert_linear and sparse_linear---------
+2026-08-21 12:26:36 | INFO    | sentence_transformers.base.model | No device provided, using cpu
+2026-08-21 12:26:36 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/modules.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:36 | INFO    | sentence_transformers.base.model | No modules.json found for BAAI/bge-reranker-v2-m3, initializing a new CrossEncoder model.
+2026-08-21 12:26:36 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:37 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 12:26:37 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:37 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/adapter_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:37 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:38 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:38 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/processor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:38 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:38 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/video_preprocessor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:38 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:39 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:39 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:39 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:39 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:39 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:40 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 12:26:40 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main?recursive=true&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:40 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 12:26:43 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:26:43 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 12:26:43 | INFO    | SmartQuery.backend.database.milvus | milvus connected localhost:19530
+2026-08-21 12:26:55 | INFO    | SmartQuery.backend.database.milvus | milvus connected localhost:19530
+2026-08-21 12:33:44 | INFO    | SmartQuery.backend.database.milvus | milvus connected localhost:19530
+2026-08-21 12:34:32 | INFO    | SmartQuery.backend.database.milvus | milvus connected localhost:19530
+2026-08-21 12:34:32 | INFO    | SmartQuery.rag.ingest | clean_documents: 1 -> 1 chunks
+2026-08-21 12:34:33 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:34:33 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:35:45 | INFO    | SmartQuery.backend.database.milvus | milvus connected localhost:19530
+2026-08-21 12:35:45 | INFO    | SmartQuery.rag.ingest | clean_documents: 1 -> 1 chunks
+2026-08-21 12:35:46 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:35:47 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:35:55 | INFO    | SmartQuery.rag.ingest | ingest file=data/LangChain 框架入门.txt partition=txt chunks=23
+2026-08-21 12:36:28 | INFO    | SmartQuery.backend.database.milvus | milvus connected localhost:19530
+2026-08-21 12:36:28 | INFO    | SmartQuery.rag.ingest | clean_documents: 1 -> 1 chunks
+2026-08-21 12:36:29 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:36:29 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:36:37 | INFO    | SmartQuery.rag.ingest | ingest file=data\LangChain 框架入门.txt partition=txt chunks=23
+2026-08-21 12:36:37 | INFO    | SmartQuery.rag.ingest | clean_documents: 1 -> 1 chunks
+2026-08-21 12:36:38 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:36:46 | INFO    | SmartQuery.rag.ingest | ingest file=data\Linux系统运维基础.txt partition=txt chunks=10
+2026-08-21 12:36:46 | INFO    | SmartQuery.rag.ingest | clean_documents: 1 -> 1 chunks
+2026-08-21 12:36:47 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:36:48 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:36:57 | INFO    | SmartQuery.rag.ingest | ingest file=data\MySQL 数据库详解.txt partition=txt chunks=21
+2026-08-21 12:36:57 | INFO    | SmartQuery.rag.ingest | clean_documents: 1 -> 1 chunks
+2026-08-21 12:36:58 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:36:58 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:37:06 | INFO    | SmartQuery.rag.ingest | ingest file=data\Python 编程基础.txt partition=txt chunks=23
+2026-08-21 12:37:06 | INFO    | SmartQuery.rag.ingest | clean_documents: 1 -> 1 chunks
+2026-08-21 12:37:07 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:37:07 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:37:16 | INFO    | SmartQuery.rag.ingest | ingest file=data\RAG 技术原理与实践.txt partition=txt chunks=21
+2026-08-21 12:37:16 | INFO    | SmartQuery.rag.ingest | clean_documents: 1 -> 1 chunks
+2026-08-21 12:37:17 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:37:17 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:37:26 | INFO    | SmartQuery.rag.ingest | ingest file=data\向量数据库与嵌入技术.txt partition=txt chunks=21
+2026-08-21 12:37:26 | INFO    | SmartQuery.rag.ingest | clean_documents: 1 -> 1 chunks
+2026-08-21 12:37:27 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:37:28 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:37:36 | INFO    | SmartQuery.rag.ingest | ingest file=data\大语言模型应用开发.txt partition=txt chunks=24
+2026-08-21 12:37:36 | INFO    | SmartQuery.rag.ingest | clean_documents: 1 -> 1 chunks
+2026-08-21 12:37:37 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:37:48 | INFO    | SmartQuery.rag.ingest | ingest file=data\文献检索与学术研究方法.txt partition=txt chunks=7
+2026-08-21 12:37:48 | INFO    | SmartQuery.rag.ingest | clean_documents: 1 -> 1 chunks
+2026-08-21 12:37:49 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:37:57 | INFO    | SmartQuery.rag.ingest | ingest file=data\财务会计数据分析入门.txt partition=txt chunks=9
+2026-08-21 12:38:26 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:26 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/tokenizer_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:27 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:28 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 12:38:28 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:28 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 12:38:31 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3 "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:31 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3 "HTTP/1.1 200 OK"
+2026-08-21 12:38:32 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:32 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 200 OK"
+2026-08-21 12:38:32 | INFO    | FlagEmbedding.finetune.embedder.encoder_only.m3.runner | loading existing colbert_linear and sparse_linear---------
+2026-08-21 12:38:33 | INFO    | sentence_transformers.base.model | No device provided, using cpu
+2026-08-21 12:38:33 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/modules.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:33 | INFO    | sentence_transformers.base.model | No modules.json found for BAAI/bge-reranker-v2-m3, initializing a new CrossEncoder model.
+2026-08-21 12:38:33 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:34 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 12:38:34 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:34 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/adapter_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:34 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:35 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:35 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/processor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:35 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:36 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/video_preprocessor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:36 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:36 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:36 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:36 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:37 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:37 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:37 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 12:38:37 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main?recursive=true&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:38 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 12:38:40 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:38:40 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 12:38:40 | INFO    | SmartQuery.backend.database.milvus | milvus connected localhost:19530
+2026-08-21 12:38:41 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:38:41 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=MySQL InnoDB 的索引底层采用什么数据结构？ processed=MySQL InnoDB 的索引底层采用什么数据结构
+2026-08-21 12:38:42 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:39:03 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=MySQL InnoDB 的索引底层采用什么数据结构？ dense=20 sparse=20 fused=27 top=10 (21614.6ms)
+2026-08-21 12:39:03 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=MySQL InnoDB 的索引底层采用什么数据结构？
+2026-08-21 12:39:03 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:39:04 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=什么是覆盖索引？为什么能避免回表？ processed=什么是覆盖索引 为什么能避免回表
+2026-08-21 12:39:04 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:39:21 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=什么是覆盖索引？为什么能避免回表？ dense=20 sparse=20 fused=24 top=10 (17261.5ms)
+2026-08-21 12:39:21 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=什么是覆盖索引？为什么能避免回表？
+2026-08-21 12:39:21 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:39:22 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=MySQL 的四种隔离级别分别是什么？ processed=MySQL 的四种隔离级别分别是什么
+2026-08-21 12:39:22 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:39:40 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=MySQL 的四种隔离级别分别是什么？ dense=20 sparse=20 fused=27 top=10 (18093.3ms)
+2026-08-21 12:39:40 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=MySQL 的四种隔离级别分别是什么？
+2026-08-21 12:39:40 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:39:40 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=MySQL 主从复制基于什么日志实现？ processed=MySQL 主从复制基于什么日志实现
+2026-08-21 12:39:40 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:39:58 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=MySQL 主从复制基于什么日志实现？ dense=20 sparse=20 fused=26 top=10 (17946.8ms)
+2026-08-21 12:39:58 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=MySQL 主从复制基于什么日志实现？
+2026-08-21 12:39:58 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:39:59 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=RRF 倒数秩融合的原理是什么？ processed=RRF 倒数秩融合的原理是什么
+2026-08-21 12:39:59 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:40:20 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=RRF 倒数秩融合的原理是什么？ dense=20 sparse=18 fused=29 top=10 (21514.7ms)
+2026-08-21 12:40:20 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=RRF 倒数秩融合的原理是什么？
+2026-08-21 12:40:21 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:40:21 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=RAG 系统常用的评估指标有哪些？ processed=RAG 系统常用的评估指标有哪些
+2026-08-21 12:40:21 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:40:39 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=RAG 系统常用的评估指标有哪些？ dense=20 sparse=20 fused=24 top=10 (18128.1ms)
+2026-08-21 12:40:39 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=RAG 系统常用的评估指标有哪些？
+2026-08-21 12:40:39 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:40:40 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Milvus 的架构包含哪些组件？ processed=Milvus 的架构包含哪些组件
+2026-08-21 12:40:40 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:40:57 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Milvus 的架构包含哪些组件？ dense=20 sparse=20 fused=23 top=10 (17566.6ms)
+2026-08-21 12:40:57 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Milvus 的架构包含哪些组件？
+2026-08-21 12:40:57 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:40:58 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=什么是 HNSW 索引？ processed=什么是 HNSW 索引
+2026-08-21 12:40:58 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:41:19 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=什么是 HNSW 索引？ dense=20 sparse=20 fused=29 top=10 (20786.9ms)
+2026-08-21 12:41:19 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=什么是 HNSW 索引？
+2026-08-21 12:41:19 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:41:19 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Python 装饰器的作用是什么？ processed=Python 装饰器的作用是什么
+2026-08-21 12:41:19 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:41:38 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Python 装饰器的作用是什么？ dense=20 sparse=20 fused=26 top=10 (18734.8ms)
+2026-08-21 12:41:38 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Python 装饰器的作用是什么？
+2026-08-21 12:41:38 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:41:39 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=LangChain 的 LCEL 是什么？ processed=LangChain LCEL 是什么
+2026-08-21 12:41:39 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:41:47 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=LangChain 的 LCEL 是什么？ dense=20 sparse=20 fused=12 top=10 (8059.0ms)
+2026-08-21 12:41:47 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=LangChain 的 LCEL 是什么？
+2026-08-21 12:41:47 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:41:47 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=LangChain 有哪些文档加载器？ processed=LangChain 有哪些文档加载器
+2026-08-21 12:41:47 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:41:58 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=LangChain 有哪些文档加载器？ dense=20 sparse=20 fused=14 top=10 (10693.0ms)
+2026-08-21 12:41:58 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=LangChain 有哪些文档加载器？
+2026-08-21 12:41:58 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:41:59 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=什么是向量数据库？它和关系型数据库有什么区别？ processed=什么是向量数据库 它和关系型数据库有什么区别
+2026-08-21 12:41:59 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:42:18 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=什么是向量数据库？它和关系型数据库有什么区别？ dense=20 sparse=20 fused=25 top=10 (19010.5ms)
+2026-08-21 12:42:18 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=什么是向量数据库？它和关系型数据库有什么区别？
+2026-08-21 12:42:18 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:42:18 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Linux 文件权限分哪几级？ processed=Linux 文件权限分哪几级
+2026-08-21 12:42:18 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:42:36 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Linux 文件权限分哪几级？ dense=20 sparse=20 fused=27 top=10 (18148.1ms)
+2026-08-21 12:42:36 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Linux 文件权限分哪几级？
+2026-08-21 12:42:37 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:42:37 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=RAG 的完整流程包括哪几步？ processed=RAG 的完整流程包括哪几步
+2026-08-21 12:42:37 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:42:53 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=RAG 的完整流程包括哪几步？ dense=20 sparse=20 fused=21 top=10 (15943.1ms)
+2026-08-21 12:42:53 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=RAG 的完整流程包括哪几步？
+2026-08-21 12:42:53 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:42:54 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=text-embedding-v4 的向量维度是多少？ processed=text embedding v4 的向量维度是多少
+2026-08-21 12:42:54 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:43:13 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=text-embedding-v4 的向量维度是多少？ dense=20 sparse=20 fused=25 top=10 (19160.6ms)
+2026-08-21 12:43:13 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=text-embedding-v4 的向量维度是多少？
+2026-08-21 12:43:13 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:43:13 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Milvus 支持哪些向量索引类型？ processed=Milvus 支持哪些向量索引类型
+2026-08-21 12:43:14 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:43:31 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Milvus 支持哪些向量索引类型？ dense=20 sparse=20 fused=24 top=10 (17698.3ms)
+2026-08-21 12:43:31 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Milvus 支持哪些向量索引类型？
+2026-08-21 12:43:31 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:43:32 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Python 的 GIL 是什么？对多线程有什么影响？ processed=Python GIL 是什么 对多线程有什么影响
+2026-08-21 12:43:32 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:43:53 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Python 的 GIL 是什么？对多线程有什么影响？ dense=20 sparse=20 fused=29 top=10 (21257.2ms)
+2026-08-21 12:43:53 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Python 的 GIL 是什么？对多线程有什么影响？
+2026-08-21 12:43:53 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:43:54 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Python asyncio 适合什么场景？ processed=Python asyncio 适合什么场景
+2026-08-21 12:43:54 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:44:16 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Python asyncio 适合什么场景？ dense=20 sparse=20 fused=31 top=10 (22757.2ms)
+2026-08-21 12:44:16 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Python asyncio 适合什么场景？
+2026-08-21 12:44:17 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:44:17 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Linux 中查看进程状态的命令有哪些？ processed=Linux 中查看进程状态的命令有哪些
+2026-08-21 12:44:17 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:44:34 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Linux 中查看进程状态的命令有哪些？ dense=20 sparse=20 fused=23 top=10 (17075.8ms)
+2026-08-21 12:44:34 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Linux 中查看进程状态的命令有哪些？
+2026-08-21 12:44:34 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:44:35 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=grep 和 sed 分别用于什么场景？ processed=grep sed 分别用于什么场景
+2026-08-21 12:44:35 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:44:59 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=grep 和 sed 分别用于什么场景？ dense=20 sparse=20 fused=33 top=10 (23968.7ms)
+2026-08-21 12:44:59 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=grep 和 sed 分别用于什么场景？
+2026-08-21 12:44:59 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:44:59 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=什么是扩展正则表达式 ERE？ processed=什么是扩展正则表达式 ERE
+2026-08-21 12:44:59 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:45:20 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=什么是扩展正则表达式 ERE？ dense=20 sparse=17 fused=28 top=10 (20882.7ms)
+2026-08-21 12:45:20 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=什么是扩展正则表达式 ERE？
+2026-08-21 12:45:21 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:45:21 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=RunnablePassthrough 的作用是什么？ processed=RunnablePassthrough 的作用是什么
+2026-08-21 12:45:21 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:45:39 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=RunnablePassthrough 的作用是什么？ dense=20 sparse=20 fused=27 top=10 (18386.1ms)
+2026-08-21 12:45:39 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=RunnablePassthrough 的作用是什么？
+2026-08-21 12:45:40 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:45:40 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=数据库查询越来越慢，怎么查看执行计划定位问题？ processed=数据库查询越来越慢 怎么查看执行计划定位问题
+2026-08-21 12:45:40 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:46:03 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=数据库查询越来越慢，怎么查看执行计划定位问题？ dense=20 sparse=20 fused=30 top=10 (22687.1ms)
+2026-08-21 12:46:03 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=数据库查询越来越慢，怎么查看执行计划定位问题？
+2026-08-21 12:46:03 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:46:03 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=程序处理大数据时内存占用过高，有什么省内存的写法？ processed=程序处理大数据时内存占用过高 有什么省内存的写法
+2026-08-21 12:46:04 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:46:25 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=程序处理大数据时内存占用过高，有什么省内存的写法？ dense=20 sparse=20 fused=31 top=10 (21309.5ms)
+2026-08-21 12:46:25 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=程序处理大数据时内存占用过高，有什么省内存的写法？
+2026-08-21 12:46:25 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:46:25 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=想给大量文档做语义检索，怎么把文本变成向量？ processed=想给大量文档做语义检索 怎么把文本变成向量
+2026-08-21 12:46:26 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:46:43 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=想给大量文档做语义检索，怎么把文本变成向量？ dense=20 sparse=20 fused=23 top=10 (17399.1ms)
+2026-08-21 12:46:43 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=想给大量文档做语义检索，怎么把文本变成向量？
+2026-08-21 12:46:43 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:46:43 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=日志文件很大，怎么快速找出包含 error 的行？ processed=日志文件很大 怎么快速找出包含 error 的行
+2026-08-21 12:46:44 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:47:05 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=日志文件很大，怎么快速找出包含 error 的行？ dense=20 sparse=20 fused=29 top=10 (22038.4ms)
+2026-08-21 12:47:05 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=日志文件很大，怎么快速找出包含 error 的行？
+2026-08-21 12:47:06 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:47:06 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=同一段对话想记住之前的上下文，用什么方法？ processed=同一段对话想记住之前的上下文 用什么方法
+2026-08-21 12:47:06 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:47:25 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=同一段对话想记住之前的上下文，用什么方法？ dense=20 sparse=20 fused=26 top=10 (18968.1ms)
+2026-08-21 12:47:25 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=同一段对话想记住之前的上下文，用什么方法？
+2026-08-21 12:47:25 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:47:26 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=对话历史太长，怎么压缩记忆避免上下文超限？ processed=对话历史太长 怎么压缩记忆避免上下文超限
+2026-08-21 12:47:26 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:47:42 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=对话历史太长，怎么压缩记忆避免上下文超限？ dense=20 sparse=20 fused=24 top=10 (16350.2ms)
+2026-08-21 12:47:42 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=对话历史太长，怎么压缩记忆避免上下文超限？
+2026-08-21 12:47:42 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:47:42 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=想把 PDF 里的内容做成可以提问的知识库，第一步该做什么？ processed=想把 PDF 里的内容做成可以提问的知识库 第一步该做什么
+2026-08-21 12:47:43 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:48:35 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/agent-harnesses "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:38 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/agent-harnesses "HTTP/1.1 200 OK"
+2026-08-21 12:48:38 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:38 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/tokenizer_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:38 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:39 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 12:48:39 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:40 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 12:48:42 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3 "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:42 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3 "HTTP/1.1 200 OK"
+2026-08-21 12:48:43 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:43 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 200 OK"
+2026-08-21 12:48:43 | INFO    | FlagEmbedding.finetune.embedder.encoder_only.m3.runner | loading existing colbert_linear and sparse_linear---------
+2026-08-21 12:48:44 | INFO    | sentence_transformers.base.model | No device provided, using cpu
+2026-08-21 12:48:44 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/modules.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:44 | INFO    | sentence_transformers.base.model | No modules.json found for BAAI/bge-reranker-v2-m3, initializing a new CrossEncoder model.
+2026-08-21 12:48:44 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:45 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 12:48:45 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:45 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/adapter_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:46 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:46 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:46 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/processor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:46 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:46 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/video_preprocessor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:47 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:47 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:47 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:48 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:48 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:48 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:48 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 12:48:48 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main?recursive=true&expand=false "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:49 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 12:48:51 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 308 Permanent Redirect"
+2026-08-21 12:48:51 | INFO    | httpx | HTTP Request: GET https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 12:48:51 | INFO    | SmartQuery.backend.database.milvus | milvus connected localhost:19530
+2026-08-21 12:48:52 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:48:52 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=MySQL InnoDB 的索引底层采用什么数据结构？ processed=MySQL InnoDB 的索引底层采用什么数据结构
+2026-08-21 12:48:52 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:49:11 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=MySQL InnoDB 的索引底层采用什么数据结构？ dense=20 sparse=20 fused=27 top=10 (19234.0ms)
+2026-08-21 12:49:11 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=MySQL InnoDB 的索引底层采用什么数据结构？
+2026-08-21 12:49:12 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:49:12 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=什么是覆盖索引？为什么能避免回表？ processed=什么是覆盖索引 为什么能避免回表
+2026-08-21 12:49:12 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:49:29 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=什么是覆盖索引？为什么能避免回表？ dense=20 sparse=20 fused=24 top=10 (17157.7ms)
+2026-08-21 12:49:29 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=什么是覆盖索引？为什么能避免回表？
+2026-08-21 12:49:29 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:49:30 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=MySQL 的四种隔离级别分别是什么？ processed=MySQL 的四种隔离级别分别是什么
+2026-08-21 12:49:30 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:49:48 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=MySQL 的四种隔离级别分别是什么？ dense=20 sparse=20 fused=27 top=10 (18279.7ms)
+2026-08-21 12:49:48 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=MySQL 的四种隔离级别分别是什么？
+2026-08-21 12:49:48 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:49:49 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=MySQL 主从复制基于什么日志实现？ processed=MySQL 主从复制基于什么日志实现
+2026-08-21 12:49:49 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:50:06 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=MySQL 主从复制基于什么日志实现？ dense=20 sparse=20 fused=26 top=10 (17673.1ms)
+2026-08-21 12:50:06 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=MySQL 主从复制基于什么日志实现？
+2026-08-21 12:50:06 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:50:07 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=RRF 倒数秩融合的原理是什么？ processed=RRF 倒数秩融合的原理是什么
+2026-08-21 12:50:07 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:50:28 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=RRF 倒数秩融合的原理是什么？ dense=20 sparse=18 fused=29 top=10 (21251.7ms)
+2026-08-21 12:50:28 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=RRF 倒数秩融合的原理是什么？
+2026-08-21 12:50:28 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:50:29 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=RAG 系统常用的评估指标有哪些？ processed=RAG 系统常用的评估指标有哪些
+2026-08-21 12:50:29 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:50:47 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=RAG 系统常用的评估指标有哪些？ dense=20 sparse=20 fused=24 top=10 (18132.2ms)
+2026-08-21 12:50:47 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=RAG 系统常用的评估指标有哪些？
+2026-08-21 12:50:47 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:50:47 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Milvus 的架构包含哪些组件？ processed=Milvus 的架构包含哪些组件
+2026-08-21 12:50:47 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:51:05 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Milvus 的架构包含哪些组件？ dense=20 sparse=20 fused=23 top=10 (17968.5ms)
+2026-08-21 12:51:05 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Milvus 的架构包含哪些组件？
+2026-08-21 12:51:06 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:51:06 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=什么是 HNSW 索引？ processed=什么是 HNSW 索引
+2026-08-21 12:51:06 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:51:27 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=什么是 HNSW 索引？ dense=20 sparse=20 fused=29 top=10 (21165.2ms)
+2026-08-21 12:51:27 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=什么是 HNSW 索引？
+2026-08-21 12:51:27 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:51:28 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Python 装饰器的作用是什么？ processed=Python 装饰器的作用是什么
+2026-08-21 12:51:28 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:51:47 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Python 装饰器的作用是什么？ dense=20 sparse=20 fused=26 top=10 (19290.4ms)
+2026-08-21 12:51:47 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Python 装饰器的作用是什么？
+2026-08-21 12:51:47 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:51:47 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=LangChain 的 LCEL 是什么？ processed=LangChain LCEL 是什么
+2026-08-21 12:51:48 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:51:56 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=LangChain 的 LCEL 是什么？ dense=20 sparse=20 fused=12 top=10 (8165.0ms)
+2026-08-21 12:51:56 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=LangChain 的 LCEL 是什么？
+2026-08-21 12:51:56 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:51:56 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=LangChain 有哪些文档加载器？ processed=LangChain 有哪些文档加载器
+2026-08-21 12:51:56 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:52:07 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=LangChain 有哪些文档加载器？ dense=20 sparse=20 fused=14 top=10 (10719.8ms)
+2026-08-21 12:52:07 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=LangChain 有哪些文档加载器？
+2026-08-21 12:52:07 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:52:08 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=什么是向量数据库？它和关系型数据库有什么区别？ processed=什么是向量数据库 它和关系型数据库有什么区别
+2026-08-21 12:52:08 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:52:26 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=什么是向量数据库？它和关系型数据库有什么区别？ dense=20 sparse=20 fused=25 top=10 (18877.5ms)
+2026-08-21 12:52:26 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=什么是向量数据库？它和关系型数据库有什么区别？
+2026-08-21 12:52:27 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:52:27 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Linux 文件权限分哪几级？ processed=Linux 文件权限分哪几级
+2026-08-21 12:52:27 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:52:45 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Linux 文件权限分哪几级？ dense=20 sparse=20 fused=27 top=10 (18139.5ms)
+2026-08-21 12:52:45 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Linux 文件权限分哪几级？
+2026-08-21 12:52:45 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:52:46 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=RAG 的完整流程包括哪几步？ processed=RAG 的完整流程包括哪几步
+2026-08-21 12:52:46 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:53:01 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=RAG 的完整流程包括哪几步？ dense=20 sparse=20 fused=21 top=10 (15536.7ms)
+2026-08-21 12:53:01 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=RAG 的完整流程包括哪几步？
+2026-08-21 12:53:02 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:53:02 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=text-embedding-v4 的向量维度是多少？ processed=text embedding v4 的向量维度是多少
+2026-08-21 12:53:02 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:53:21 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=text-embedding-v4 的向量维度是多少？ dense=20 sparse=20 fused=25 top=10 (19039.2ms)
+2026-08-21 12:53:21 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=text-embedding-v4 的向量维度是多少？
+2026-08-21 12:53:21 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:53:22 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Milvus 支持哪些向量索引类型？ processed=Milvus 支持哪些向量索引类型
+2026-08-21 12:53:22 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:53:39 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Milvus 支持哪些向量索引类型？ dense=20 sparse=20 fused=24 top=10 (17758.4ms)
+2026-08-21 12:53:39 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Milvus 支持哪些向量索引类型？
+2026-08-21 12:53:40 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:53:40 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Python 的 GIL 是什么？对多线程有什么影响？ processed=Python GIL 是什么 对多线程有什么影响
+2026-08-21 12:53:40 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:54:01 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Python 的 GIL 是什么？对多线程有什么影响？ dense=20 sparse=20 fused=29 top=10 (21256.1ms)
+2026-08-21 12:54:01 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Python 的 GIL 是什么？对多线程有什么影响？
+2026-08-21 12:54:01 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:54:02 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Python asyncio 适合什么场景？ processed=Python asyncio 适合什么场景
+2026-08-21 12:54:02 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:54:26 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Python asyncio 适合什么场景？ dense=20 sparse=20 fused=31 top=10 (24107.5ms)
+2026-08-21 12:54:26 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Python asyncio 适合什么场景？
+2026-08-21 12:54:26 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:54:26 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Linux 中查看进程状态的命令有哪些？ processed=Linux 中查看进程状态的命令有哪些
+2026-08-21 12:54:27 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:54:45 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Linux 中查看进程状态的命令有哪些？ dense=20 sparse=20 fused=23 top=10 (18887.0ms)
+2026-08-21 12:54:45 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Linux 中查看进程状态的命令有哪些？
+2026-08-21 12:54:46 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:54:46 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=grep 和 sed 分别用于什么场景？ processed=grep sed 分别用于什么场景
+2026-08-21 12:54:46 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:55:15 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=grep 和 sed 分别用于什么场景？ dense=20 sparse=20 fused=33 top=10 (28596.9ms)
+2026-08-21 12:55:15 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=grep 和 sed 分别用于什么场景？
+2026-08-21 12:55:15 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:55:15 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=什么是扩展正则表达式 ERE？ processed=什么是扩展正则表达式 ERE
+2026-08-21 12:55:15 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:55:38 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=什么是扩展正则表达式 ERE？ dense=20 sparse=17 fused=28 top=10 (23170.7ms)
+2026-08-21 12:55:38 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=什么是扩展正则表达式 ERE？
+2026-08-21 12:55:39 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:55:39 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=RunnablePassthrough 的作用是什么？ processed=RunnablePassthrough 的作用是什么
+2026-08-21 12:55:39 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:55:58 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=RunnablePassthrough 的作用是什么？ dense=20 sparse=20 fused=27 top=10 (19092.3ms)
+2026-08-21 12:55:58 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=RunnablePassthrough 的作用是什么？
+2026-08-21 12:55:58 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:55:58 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=数据库查询越来越慢，怎么查看执行计划定位问题？ processed=数据库查询越来越慢 怎么查看执行计划定位问题
+2026-08-21 12:55:59 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:56:22 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=数据库查询越来越慢，怎么查看执行计划定位问题？ dense=20 sparse=20 fused=30 top=10 (23027.3ms)
+2026-08-21 12:56:22 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=数据库查询越来越慢，怎么查看执行计划定位问题？
+2026-08-21 12:56:22 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:56:22 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=程序处理大数据时内存占用过高，有什么省内存的写法？ processed=程序处理大数据时内存占用过高 有什么省内存的写法
+2026-08-21 12:56:23 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:56:48 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=程序处理大数据时内存占用过高，有什么省内存的写法？ dense=20 sparse=20 fused=31 top=10 (25699.0ms)
+2026-08-21 12:56:48 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=程序处理大数据时内存占用过高，有什么省内存的写法？
+2026-08-21 12:56:48 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:56:49 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=想给大量文档做语义检索，怎么把文本变成向量？ processed=想给大量文档做语义检索 怎么把文本变成向量
+2026-08-21 12:56:49 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:57:07 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=想给大量文档做语义检索，怎么把文本变成向量？ dense=20 sparse=20 fused=23 top=10 (18643.2ms)
+2026-08-21 12:57:07 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=想给大量文档做语义检索，怎么把文本变成向量？
+2026-08-21 12:57:08 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:57:08 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=日志文件很大，怎么快速找出包含 error 的行？ processed=日志文件很大 怎么快速找出包含 error 的行
+2026-08-21 12:57:08 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:57:30 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=日志文件很大，怎么快速找出包含 error 的行？ dense=20 sparse=20 fused=29 top=10 (22256.7ms)
+2026-08-21 12:57:30 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=日志文件很大，怎么快速找出包含 error 的行？
+2026-08-21 12:57:30 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:57:31 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=同一段对话想记住之前的上下文，用什么方法？ processed=同一段对话想记住之前的上下文 用什么方法
+2026-08-21 12:57:31 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:57:51 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=同一段对话想记住之前的上下文，用什么方法？ dense=20 sparse=20 fused=26 top=10 (19894.5ms)
+2026-08-21 12:57:51 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=同一段对话想记住之前的上下文，用什么方法？
+2026-08-21 12:57:51 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:57:51 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=对话历史太长，怎么压缩记忆避免上下文超限？ processed=对话历史太长 怎么压缩记忆避免上下文超限
+2026-08-21 12:57:52 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:58:09 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=对话历史太长，怎么压缩记忆避免上下文超限？ dense=20 sparse=20 fused=24 top=10 (17475.0ms)
+2026-08-21 12:58:09 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=对话历史太长，怎么压缩记忆避免上下文超限？
+2026-08-21 12:58:09 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:58:09 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=想把 PDF 里的内容做成可以提问的知识库，第一步该做什么？ processed=想把 PDF 里的内容做成可以提问的知识库 第一步该做什么
+2026-08-21 12:58:10 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:58:33 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=想把 PDF 里的内容做成可以提问的知识库，第一步该做什么？ dense=20 sparse=20 fused=30 top=10 (23384.6ms)
+2026-08-21 12:58:33 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=想把 PDF 里的内容做成可以提问的知识库，第一步该做什么？
+2026-08-21 12:58:33 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:58:34 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=多用户共用服务器，怎么限制普通用户只能读不能改系统配置？ processed=多用户共用服务器 怎么限制普通用户只能读不能改系统配置
+2026-08-21 12:58:34 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:58:50 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=多用户共用服务器，怎么限制普通用户只能读不能改系统配置？ dense=20 sparse=20 fused=24 top=10 (16732.7ms)
+2026-08-21 12:58:50 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=多用户共用服务器，怎么限制普通用户只能读不能改系统配置？
+2026-08-21 12:58:51 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:58:51 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Milvus 里怎么实现混合检索？需要哪些组件配合？ processed=Milvus 里怎么实现混合检索 需要哪些组件配合
+2026-08-21 12:58:51 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:59:12 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Milvus 里怎么实现混合检索？需要哪些组件配合？ dense=20 sparse=20 fused=26 top=10 (20976.3ms)
+2026-08-21 12:59:12 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Milvus 里怎么实现混合检索？需要哪些组件配合？
+2026-08-21 12:59:12 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:59:13 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=LangChain 完整 RAG 应用需要哪些组件串联？ processed=LangChain 完整 RAG 应用需要哪些组件串联
+2026-08-21 12:59:13 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:59:24 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=LangChain 完整 RAG 应用需要哪些组件串联？ dense=20 sparse=20 fused=16 top=10 (11540.6ms)
+2026-08-21 12:59:24 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=LangChain 完整 RAG 应用需要哪些组件串联？
+2026-08-21 12:59:24 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:59:25 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Linux 上想定时备份文件并压缩日志，涉及哪些命令和机制？ processed=Linux 上想定时备份文件并压缩日志 涉及哪些命令和机制
+2026-08-21 12:59:25 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:59:42 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Linux 上想定时备份文件并压缩日志，涉及哪些命令和机制？ dense=20 sparse=20 fused=24 top=10 (16947.7ms)
+2026-08-21 12:59:42 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Linux 上想定时备份文件并压缩日志，涉及哪些命令和机制？
+2026-08-21 12:59:42 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:59:42 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=如何用向量数据库和 LangChain 搭建企业知识库问答？ processed=如何用向量数据库和 LangChain 搭建企业知识库问答
+2026-08-21 12:59:43 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:59:59 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=如何用向量数据库和 LangChain 搭建企业知识库问答？ dense=20 sparse=20 fused=20 top=10 (16395.1ms)
+2026-08-21 12:59:59 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=如何用向量数据库和 LangChain 搭建企业知识库问答？
+2026-08-21 12:59:59 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 12:59:59 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=Agentic RAG 和朴素 RAG 在流程上有什么区别？ processed=Agentic RAG 和朴素 RAG 在流程上有什么区别
+2026-08-21 12:59:59 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 13:00:13 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=Agentic RAG 和朴素 RAG 在流程上有什么区别？ dense=20 sparse=20 fused=18 top=10 (13311.9ms)
+2026-08-21 13:00:13 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=Agentic RAG 和朴素 RAG 在流程上有什么区别？
+2026-08-21 13:00:13 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 13:00:13 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=RAG 的评估指标里，忠实度和上下文召回率分别衡量什么？ processed=RAG 的评估指标里 忠实度和上下文召回率分别衡量什么
+2026-08-21 13:00:13 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 13:00:33 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=RAG 的评估指标里，忠实度和上下文召回率分别衡量什么？ dense=20 sparse=20 fused=26 top=10 (19805.9ms)
+2026-08-21 13:00:33 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=RAG 的评估指标里，忠实度和上下文召回率分别衡量什么？
+2026-08-21 13:00:33 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 13:00:34 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=稠密检索和稀疏检索各有什么优势和劣势？ processed=稠密检索和稀疏检索各有什么优势和劣势
+2026-08-21 13:00:34 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 13:00:54 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=稠密检索和稀疏检索各有什么优势和劣势？ dense=20 sparse=20 fused=28 top=10 (20773.2ms)
+2026-08-21 13:00:54 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=稠密检索和稀疏检索各有什么优势和劣势？
+2026-08-21 13:00:55 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 13:00:55 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=IVF_FLAT 和 HNSW 索引有什么区别？ processed=IVF FLAT HNSW 索引有什么区别
+2026-08-21 13:00:55 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 13:01:17 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=IVF_FLAT 和 HNSW 索引有什么区别？ dense=20 sparse=20 fused=31 top=10 (22053.0ms)
+2026-08-21 13:01:17 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=IVF_FLAT 和 HNSW 索引有什么区别？
+2026-08-21 13:01:17 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 13:01:18 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=ConversationBufferMemory 和 ConversationS processed=ConversationBufferMemory ConversationSum
+2026-08-21 13:01:18 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 13:01:33 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=ConversationBufferMemory 和 ConversationSummaryMemory 的区别？ dense=20 sparse=9 fused=22 top=10 (15484.3ms)
+2026-08-21 13:01:33 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=ConversationBufferMemory 和 ConversationSummaryMemory 的区别？
+2026-08-21 13:01:34 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 13:01:34 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta original=LLM 的知识截止和幻觉问题，RAG 分别怎么解决？ processed=LLM 的知识截止和幻觉问题 RAG 分别怎么解决
+2026-08-21 13:01:34 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings "HTTP/1.1 200 OK"
+2026-08-21 13:01:52 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta query=LLM 的知识截止和幻觉问题，RAG 分别怎么解决？ dense=20 sparse=20 fused=24 top=10 (18111.1ms)
+2026-08-21 13:01:52 | INFO    | SmartQuery.rag.retriever | retrieve_with_meta cache_hit query=LLM 的知识截止和幻觉问题，RAG 分别怎么解决？
+2026-08-21 23:11:49 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:11:49 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-m3/5617a9f61b028005a4858fdac845db406aefb181/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:11:49 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:11:49 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-m3/5617a9f61b028005a4858fdac845db406aefb181/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:11:49 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 23:11:50 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 23:11:52 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:11:52 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 200 OK"
+2026-08-21 23:11:54 | INFO    | FlagEmbedding.finetune.embedder.encoder_only.m3.runner | loading existing colbert_linear and sparse_linear---------
+2026-08-21 23:11:55 | INFO    | sentence_transformers.base.model | No device provided, using cpu
+2026-08-21 23:11:55 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/modules.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:11:55 | INFO    | sentence_transformers.base.model | No modules.json found for BAAI/bge-reranker-v2-m3, initializing a new CrossEncoder model.
+2026-08-21 23:11:55 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:11:55 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:11:55 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:11:56 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:11:56 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:11:56 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:11:57 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:11:57 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:11:58 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:11:58 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:11:58 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:11:59 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:11:59 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:11:59 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:11:59 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:12:00 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:12:00 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:12:00 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:12:00 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:12:01 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:12:01 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 23:12:01 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 23:12:03 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:12:04 | INFO    | SmartQuery.backend.database.milvus | milvus connected localhost:19530
+2026-08-21 23:12:05 | INFO    | SmartQuery.backend.database.mysql | mysql tables ready
+2026-08-21 23:28:00 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:28:00 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-m3/5617a9f61b028005a4858fdac845db406aefb181/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:28:00 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:28:01 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-m3/5617a9f61b028005a4858fdac845db406aefb181/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:28:01 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 23:28:01 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 23:28:04 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:28:05 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 200 OK"
+2026-08-21 23:28:06 | INFO    | FlagEmbedding.finetune.embedder.encoder_only.m3.runner | loading existing colbert_linear and sparse_linear---------
+2026-08-21 23:28:06 | INFO    | sentence_transformers.base.model | No device provided, using cpu
+2026-08-21 23:28:06 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/modules.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:28:06 | INFO    | sentence_transformers.base.model | No modules.json found for BAAI/bge-reranker-v2-m3, initializing a new CrossEncoder model.
+2026-08-21 23:28:07 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:28:07 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:28:07 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:28:08 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:28:08 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:28:08 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:28:08 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:28:08 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:28:09 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:28:09 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:28:10 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:28:10 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:28:10 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:28:11 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:28:11 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:28:11 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:28:12 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:28:12 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:28:12 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:28:13 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:28:13 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 23:28:13 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 23:28:16 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:28:54 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:28:54 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-m3/5617a9f61b028005a4858fdac845db406aefb181/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:28:55 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:28:55 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-m3/5617a9f61b028005a4858fdac845db406aefb181/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:28:55 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 23:28:55 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 23:29:00 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:29:00 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 200 OK"
+2026-08-21 23:29:01 | INFO    | FlagEmbedding.finetune.embedder.encoder_only.m3.runner | loading existing colbert_linear and sparse_linear---------
+2026-08-21 23:29:01 | INFO    | sentence_transformers.base.model | No device provided, using cpu
+2026-08-21 23:29:02 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/modules.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:29:02 | INFO    | sentence_transformers.base.model | No modules.json found for BAAI/bge-reranker-v2-m3, initializing a new CrossEncoder model.
+2026-08-21 23:29:02 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:29:02 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:29:03 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:29:03 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:29:03 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:29:03 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:29:05 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:29:05 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:29:05 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:29:06 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:29:06 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:29:06 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:29:07 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:29:07 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:29:07 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:29:07 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:29:07 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:29:08 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:29:08 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:29:08 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:29:08 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 23:29:08 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 23:29:11 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:29:12 | INFO    | SmartQuery.backend.database.milvus | milvus connected localhost:19530
+2026-08-21 23:29:15 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-21 23:29:15 | INFO    | SmartQuery.rag.agent | query_analysis intent=chit_chat
+2026-08-21 23:29:19 | INFO    | httpx | HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-21 23:41:49 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:41:49 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-m3/5617a9f61b028005a4858fdac845db406aefb181/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:41:50 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:41:50 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-m3/5617a9f61b028005a4858fdac845db406aefb181/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:41:50 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 23:41:51 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 23:41:53 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:41:53 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-m3/revision/main "HTTP/1.1 200 OK"
+2026-08-21 23:41:53 | INFO    | FlagEmbedding.finetune.embedder.encoder_only.m3.runner | loading existing colbert_linear and sparse_linear---------
+2026-08-21 23:41:54 | INFO    | sentence_transformers.base.model | No device provided, using cpu
+2026-08-21 23:41:54 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/modules.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:41:54 | INFO    | sentence_transformers.base.model | No modules.json found for BAAI/bge-reranker-v2-m3, initializing a new CrossEncoder model.
+2026-08-21 23:41:54 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:41:55 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:41:55 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:41:55 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:41:56 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:41:56 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:41:56 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:41:56 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:41:57 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:41:58 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:41:58 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:41:58 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-21 23:41:59 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:41:59 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:41:59 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:42:00 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:42:00 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:42:00 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/config.json "HTTP/1.1 200 OK"
+2026-08-21 23:42:01 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/BAAI/bge-reranker-v2-m3/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-21 23:42:01 | INFO    | httpx | HTTP Request: HEAD https://hf-mirror.com/api/resolve-cache/models/BAAI/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-21 23:42:01 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-21 23:42:01 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-21 23:42:03 | INFO    | httpx | HTTP Request: GET https://hf-mirror.com/api/models/BAAI/bge-reranker-v2-m3 "HTTP/1.1 200 OK"
+2026-08-21 23:42:04 | INFO    | SmartQuery.backend.database.milvus | milvus connected localhost:19530
+2026-08-21 23:42:04 | INFO    | SmartQuery.backend.database.mysql | mysql tables ready

@@ -1,30 +1,24 @@
 # Agentic RAG —— 基于混合检索的专业知识智能问答系统
 
-基于 LangGraph 构建的 Agentic RAG（检索增强生成）系统，面向 **专业知识场景**，支持**稠密 + 稀疏混合检索 + 重排序**、**文档自主评分与重检**、**幻觉自省**、**SSE 流式输出**。
+基于 LangGraph 构建的 Agentic RAG（检索增强生成）系统，面向 **专业知识场景**，支持**稠密 + 稀疏混合检索 + 重排序**、**意图分类与自动路由**、**SSE 流式输出**。
 
 ## 架构概览
 
 ```
-用户提问 → query_analysis(意图分类+搜索词优化)
+用户提问 → query_analysis(意图分类)
                 ↓
-         retrieve(稠密+稀疏混合检索, top 20+20)
+         retrieve(稠密+稀疏混合检索, top 20+20 → RRF → Rerank)
                 ↓
-         grade_documents(LLM逐篇打分 1-5)
-           ↓           ↓
-      通过 ≥ 2篇    通过不足 → rewrite_query → retrieve (最多3轮)
-           ↓
-         generate(基于相关文档+对话历史, 流式生成)
-           ↓
-         reflect(幻觉检查, 有问题 → 重新生成)
-           ↓
-         SSE 流式推送到前端(Thinking/Stats/Sources/Grades/Token/Done)
+         generate(基于检索文档+对话历史, 流式生成)
+                ↓
+         SSE 流式推送到前端(Thinking/Stats/Sources/Token/Done)
 ```
 
 ## 技术栈
 
 | 层级 | 技术 |
 |------|------|
-| 工作流引擎 | **LangGraph** — 8 节点 Agentic 决策流，条件路由 + 循环重检 |
+| 工作流引擎 | **LangGraph** — 4 节点 Agentic 决策流，意图分类 + 自动路由 |
 | 稠密向量 | **text-embedding-v4** (DashScope) — 1024 维语义检索 |
 | 稀疏向量 | **BAAI/bge-m3** (FlagEmbedding) — 词汇权重精确匹配 |
 | 检索融合 | **RRF** 倒数秩融合 + **BGE-Reranker-v2-M3** 交叉编码器重排序 |
@@ -120,7 +114,7 @@ SmartQuery — 基于 LangGraph 的智能问答系统/
 │   │       ├── milvus.py     # Milvus 向量库操作
 │   │       └── mysql.py      # MySQL 聊天记录
 │   ├── rag/
-│   │   ├── agent.py          # LangGraph 8 节点 Agentic 工作流
+│   │   ├── agent.py          # LangGraph 4 节点 Agentic 工作流
 │   │   ├── embedding.py      # 稠密 + 稀疏嵌入
 │   │   ├── retriever.py      # 混合检索 + RRF + 重排序
 │   │   └── ingest.py         # 文档加载与入库
@@ -133,7 +127,7 @@ SmartQuery — 基于 LangGraph 的智能问答系统/
 1. 上传 `data/` 下的 6 份 IT 知识 TXT
 2. 问 "B+树索引的原理是什么？"
 3. 观察：
-   - Thinking 面板：query_analysis → retrieve → grade → generate → reflect
+   - Thinking 面板：query_analysis → retrieve → generate
    - Stats 面板：稠密命中 / 稀疏命中 / RRF 融合 / Rerank 数量
    - Trace 面板：MySQL 文档 dense#1 + sparse#3 → rerank#1，Python 文档 dense#2 + sparse#1 → rerank 拉低
    - 答案流式逐字输出

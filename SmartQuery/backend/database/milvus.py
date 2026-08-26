@@ -8,7 +8,7 @@ logger = get_logger(__name__)
 
 
 COLLECTION_NAME = "smart_query_docs"  #集合名
-DIMENSION = 1024   #向量维度
+DIMENSION = 2048   #向量维度
 PARTITIONS = ["pdf", "docx", "txt", "md"]  # 支持的文档分区
 
 def connect_milvus():

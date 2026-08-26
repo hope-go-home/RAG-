@@ -50,7 +50,6 @@ from SmartQuery.backend.database.milvus import (
 )
 from SmartQuery.rag.embedding import embed_query, embed_query_sparse
 from SmartQuery.rag.retriever import rrf_fusion, retrieve_with_meta
-from SmartQuery.rag.agent import REWRITE_PROMPT, safe_small_llm_invoke
 
 EVAL_DIR = Path(__file__).resolve().parent
 GOLDEN_FILE = EVAL_DIR / "golden_set.json"
@@ -167,31 +166,8 @@ def retrieve_strategy(strategy: str, question: str, dense: list, sparse: list,
     if strategy == "hybrid_rerank":
         return retrieve_with_meta(question, top_k=top_k).documents, {}
 
-    # ---- agentic：首轮 → 判定 → LLM 改写 → 重检，合并各轮结果 ----
-    merged: list[str] = []
-    rewritten = question
-    attempts = 0
-    rewrite_log = []
-    while attempts < 3:
-        attempts += 1
-        result = retrieve_with_meta(rewritten, top_k=top_k)
-        merged = _dedupe(merged + result.documents)
-        merged_idx = [parent_to_idx[p] for p in merged if p in parent_to_idx]
-        if any(idx in gold for idx in merged_idx[:top_k]):
-            break  # 前 top_k 已包含相关文档，判定达标
-        try:
-            new_query = safe_small_llm_invoke(REWRITE_PROMPT.format_messages(
-                question=question,
-                previous_queries=", ".join([question] + rewrite_log),
-                irrelevant_samples="（检索结果中未命中相关文档）",
-            )).content.strip()
-        except Exception:
-            break
-        if not new_query or new_query in rewrite_log:
-            break
-        rewrite_log.append(new_query)
-        rewritten = new_query
-    return merged[:top_k], {"rewrites": rewrite_log, "attempts": attempts}
+    # ---- agentic：简化版，直接用 hybrid_rerank 策略 ----
+    return retrieve_with_meta(question, top_k=top_k).documents, {"rewrites": [], "attempts": 1}
 
 
 # ---------------- 主流程 ----------------
