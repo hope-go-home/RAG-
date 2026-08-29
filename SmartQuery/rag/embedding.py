@@ -1,6 +1,9 @@
 from SmartQuery.backend.config import QWEN_API_KEY, QWEN_BASE_URL
 from langchain_openai import OpenAIEmbeddings
 from FlagEmbedding import BGEM3FlagModel
+import os
+
+os.environ["HF_HUB_OFFLINE"] = "1"
 
 
 # 兼容模式

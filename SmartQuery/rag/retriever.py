@@ -87,7 +87,7 @@ def rrf_fusion(dense_results: list[tuple[str, str, float]], sparse_results: list
 
 
 #实例化交叉编码器，加载预训练模型 BAAI/bge-reranker-v2-m3，用于对查询与文档进行相关性重排序。
-reranker = CrossEncoder("BAAI/bge-reranker-v2-m3")
+reranker = CrossEncoder("BAAI/bge-reranker-v2-m3", local_files_only=True)
 
 
 # --------------- 查询预处理（提升召回）--------------- #
