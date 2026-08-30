@@ -1,4 +1,4 @@
-# Agentic RAG —— 基于混合检索的专业知识智能问答系统
+# 基于LangGraph的RAG智能问答系统
 
 基于 LangGraph 构建的 Agentic RAG（检索增强生成）系统，面向 **专业知识场景**，支持**稠密 + 稀疏混合检索 + 重排序**、**意图分类与自动路由**、**SSE 流式输出**。
 
@@ -19,7 +19,7 @@
 | 层级 | 技术 |
 |------|------|
 | 工作流引擎 | **LangGraph** — 4 节点 Agentic 决策流，意图分类 + 自动路由 |
-| 稠密向量 | **text-embedding-v4** (DashScope) — 1024 维语义检索 |
+| 稠密向量 | **qwen3.7-text-embedding** (DashScope) — 2048 维语义检索 |
 | 稀疏向量 | **BAAI/bge-m3** (FlagEmbedding) — 词汇权重精确匹配 |
 | 检索融合 | **RRF** 倒数秩融合 + **BGE-Reranker-v2-M3** 交叉编码器重排序 |
 | 向量数据库 | **Milvus** — IVF_FLAT(稠密) + SPARSE_INVERTED_INDEX(稀疏) 混合索引 |
