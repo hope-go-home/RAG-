@@ -290,3 +290,8 @@ def _persist_session(sid: str, question: str, result: dict):
     # 存 MySQL
     from SmartQuery.backend.database.mysql import save_record
     save_record(sid, question, answer)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("SmartQuery.backend.main:app", host="0.0.0.0", port=8000)
