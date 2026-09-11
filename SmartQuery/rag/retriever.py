@@ -21,6 +21,7 @@ class RetrievalSource:
     sparse_rank: int
     rrf_score: float
     rerank_score: float
+    doc_type: str = ""
 
 
 @dataclass
@@ -70,9 +71,11 @@ def _rrf_scored(dense_results: list[tuple[str, str, float]], sparse_results: lis
     - 默认从 60 调整到 30，提升融合效果
     """
     doc_scores: dict[str, dict] = {}
-    for rank, (text, parent_text, _) in enumerate(dense_results):
+    for rank, item in enumerate(dense_results):
+        text, parent_text = item[0], item[1]
         doc_scores[text] = {"parent_text": parent_text, "score": 1 / (k + rank + 1)}
-    for rank, (text, parent_text, _) in enumerate(sparse_results):
+    for rank, item in enumerate(sparse_results):
+        text, parent_text = item[0], item[1]
         if text in doc_scores:
             doc_scores[text]["score"] += 1 / (k + rank + 1)
         else:
@@ -132,7 +135,8 @@ import re
 # 返回 RetrievalResult，包含每篇文档的 dense/sparse 命中排名、RRF 分数、rerank 分数
 # 前端可据此展示"检索链路"：这篇文档来自稠密第 3 名 + 稀疏第 7 名 → RRF 融合 → rerank 排第 1
 
-def retrieve_with_meta(question: str, top_k: int = 10, partition_name: str | None = None) -> RetrievalResult:
+def retrieve_with_meta(question: str, top_k: int = 10, partition_name: str | None = None,
+                       doc_type: str | None = None, collection_name: str | None = None) -> RetrievalResult:
     """执行混合检索并返回带元数据的结果"""
     # 检查缓存
     cache_key = _get_cache_key(question, top_k)
@@ -149,18 +153,30 @@ def retrieve_with_meta(question: str, top_k: int = 10, partition_name: str | Non
 
     query_vector = embed_query(processed_query)
     query_sparse = embed_query_sparse(processed_query)
-    dense_results = search_dense(query_vector, top_k=top_k * 2, partition_name=partition_name)
-    sparse_results = search_sparse(query_sparse, top_k=top_k * 2, partition_name=partition_name)
+    expr = f'doc_type == "{doc_type}"' if doc_type else None
+    search_kwargs = {"collection_name": collection_name} if collection_name else {}
+    dense_results = search_dense(query_vector, top_k=top_k * 2, partition_name=partition_name,
+                                 expr=expr, **search_kwargs)
+    sparse_results = search_sparse(query_sparse, top_k=top_k * 2, partition_name=partition_name,
+                                   expr=expr, **search_kwargs)
 
     # 构建稠密排名映射：子块文本 → (稠密排名, 父块文本)
     dense_rank_map: dict[str, tuple[int, str]] = {}
-    for rank, (text, parent_text, _) in enumerate(dense_results, start=1):
+    for rank, item in enumerate(dense_results, start=1):
+        text, parent_text = item[0], item[1]
         dense_rank_map[text] = (rank, parent_text)
 
     # 构建稀疏排名映射
     sparse_rank_map: dict[str, tuple[int, str]] = {}
-    for rank, (text, parent_text, _) in enumerate(sparse_results, start=1):
+    for rank, item in enumerate(sparse_results, start=1):
+        text, parent_text = item[0], item[1]
         sparse_rank_map[text] = (rank, parent_text)
+
+    # 子块文本 → 文档类型（用于前端按类型着色）
+    doc_type_map: dict[str, str] = {}
+    for item in list(dense_results) + list(sparse_results):
+        if len(item) > 3 and item[3]:
+            doc_type_map.setdefault(item[0], item[3])
 
     # RRF 融合（复用 _rrf_scored，避免算法重复维护）
     scored = _rrf_scored(dense_results, sparse_results)
@@ -187,6 +203,7 @@ def retrieve_with_meta(question: str, top_k: int = 10, partition_name: str | Non
             sparse_rank=sparse_rank,
             rrf_score=round(rrf_score, 6),
             rerank_score=round(float(rerank_score), 4),
+            doc_type=doc_type_map.get(child_text, ""),
         ))
 
     elapsed = (time.perf_counter() - t0) * 1000

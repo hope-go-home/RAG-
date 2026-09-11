@@ -1,14 +1,11 @@
-from SmartQuery.backend.config import QWEN_API_KEY, QWEN_BASE_URL
+from SmartQuery.backend.config import QWEN_API_KEY, QWEN_BASE_URL, QWEN_EMBEDDING_MODEL
 from langchain_openai import OpenAIEmbeddings
 from FlagEmbedding import BGEM3FlagModel
-import os
-
-os.environ["HF_HUB_OFFLINE"] = "1"
 
 
 # 兼容模式
 embeddings = OpenAIEmbeddings(
-    model="qwen3.7-text-embedding",
+    model=QWEN_EMBEDDING_MODEL or "qwen3.7-text-embedding",
     api_key=QWEN_API_KEY,
     base_url=QWEN_BASE_URL,
     check_embedding_ctx_length=False,
@@ -17,9 +14,9 @@ embeddings = OpenAIEmbeddings(
 )
 
 """
-说明：本项目走 OpenAIEmbeddings 兼容通道（端点 .../compatible-mode/v1/embeddings，支持 text-embedding-v4）。
-另一条备选是 DashScope 原生 API（DashScopeEmbeddings），但依赖 langchain_community 版本，
-旧版本不认识 text-embedding-v4，故未采用。
+说明：本项目走 OpenAIEmbeddings 兼容通道（端点 .../compatible-mode/v1/embeddings）。
+稠密向量模型由 .env 的 QWEN_EMBEDDING_MODEL 指定，默认 qwen3.7-text-embedding。
+另一条备选是 DashScope 原生 API（DashScopeEmbeddings），但依赖 langchain_community 版本，故未采用。
 """
 
 
@@ -56,4 +53,4 @@ def embed_documents_sparse(texts: list[str]) -> list[dict[int, float]]:
 # embed_query	            稠密	     问题单条
 # embed_documents_sparse	稀疏	     入库批量
 # embed_query_sparse	    稀疏	     问题单条
-#稠密向量是text-embedding-v1模型     稀疏向量是bge-m3模型
+#稠密向量是qwen3.7-text-embedding模型     稀疏向量是bge-m3模型

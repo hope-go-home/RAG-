@@ -3,12 +3,12 @@ RAG 检索质量离线评估脚本
 ========================
 基于 golden_set.json 标注集，对五条检索策略进行分阶段量化对比：
 
-  1. dense_only      纯稠密检索（text-embedding-v4）          ← 基线
+  1. dense_only      纯稠密检索（qwen3.7-text-embedding）      ← 基线
   2. sparse_only     纯稀疏检索（bge-m3 词汇权重）
   3. hybrid_rrf      稠密 + 稀疏 + RRF 融合（不重排）          ← +混合检索
   4. hybrid_rerank   RRF 融合 + BGE-Reranker 重排序           ← +重排（生产单轮链路）
-  5. agentic         模拟 Agentic RAG：首轮检索 → 判定不足则
-                     LLM 改写查询 → 重检（最多 3 轮），合并结果 ← +Agentic 自省
+  5. agentic         真实 Agentic RAG：首轮检索 → 重排概率不足则
+                     LLM 改写查询 → 重检（最多 3 轮），合并多轮结果 ← +Agentic 自省
 
 指标（k = 1/3/5/10）：
   - Recall@k    召回率：检索到的相关父块数 / 该问题所有相关父块数
@@ -50,6 +50,12 @@ from SmartQuery.backend.database.milvus import (
 )
 from SmartQuery.rag.embedding import embed_query, embed_query_sparse
 from SmartQuery.rag.retriever import rrf_fusion, retrieve_with_meta
+from SmartQuery.rag.agent import (
+    safe_llm_invoke,
+    REWRITE_PROMPT,
+    MAX_RETRIEVAL_ATTEMPTS,
+    RERANK_SCORE_THRESHOLD,
+)
 
 EVAL_DIR = Path(__file__).resolve().parent
 GOLDEN_FILE = EVAL_DIR / "golden_set.json"
@@ -60,11 +66,12 @@ TOP_KS = [1, 3, 5, 10]
 
 # ---------------- 语料与标注 ----------------
 
-def fetch_all_parents() -> list[str]:
+def fetch_all_parents(collection_name: str | None = None) -> list[str]:
     """从 Milvus 拉取全部父块文本（去重），作为召回率计算的全集"""
     from pymilvus import Collection
 
-    collection = Collection(name=COLLECTION_NAME)
+    name = collection_name or COLLECTION_NAME
+    collection = Collection(name=name)
     collection.load()
     parents: list[str] = []
     seen: set[str] = set()
@@ -155,19 +162,44 @@ def _dedupe(items: list[str]) -> list[str]:
 
 
 def retrieve_strategy(strategy: str, question: str, dense: list, sparse: list,
-                      top_k: int, gold: set[int], parent_to_idx: dict[str, int]) -> tuple[list[str], dict]:
+                      top_k: int, gold: set[int], parent_to_idx: dict[str, int],
+                      collection_name: str | None = None) -> tuple[list[str], dict]:
     """返回 (top_k 父块文本列表, 附加信息)。agentic 用 gold 判定是否需要重检。"""
     if strategy == "dense_only":
-        return _dedupe(p for _, p, _ in dense)[:top_k], {}
+        return _dedupe(x[1] for x in dense)[:top_k], {}
     if strategy == "sparse_only":
-        return _dedupe(p for _, p, _ in sparse)[:top_k], {}
+        return _dedupe(x[1] for x in sparse)[:top_k], {}
     if strategy == "hybrid_rrf":
         return rrf_fusion(dense, sparse)[:top_k], {}
     if strategy == "hybrid_rerank":
-        return retrieve_with_meta(question, top_k=top_k).documents, {}
+        return retrieve_with_meta(question, top_k=top_k, collection_name=collection_name).documents, {}
 
-    # ---- agentic：简化版，直接用 hybrid_rerank 策略 ----
-    return retrieve_with_meta(question, top_k=top_k).documents, {"rewrites": [], "attempts": 1}
+    # ---- agentic：质量不足时 LLM 改写检索词重检，合并多轮结果 ----
+    docs: list[str] = []
+    rewrites: list[str] = []
+    query = question
+    attempts = 0
+    while attempts < MAX_RETRIEVAL_ATTEMPTS:
+        attempts += 1
+        res = retrieve_with_meta(query, top_k=top_k, collection_name=collection_name)
+        docs = _dedupe(docs + list(res.documents))
+        if not res.sources:
+            break
+        max_score = max(s.rerank_score for s in res.sources)
+        if max_score >= RERANK_SCORE_THRESHOLD or attempts >= MAX_RETRIEVAL_ATTEMPTS:
+            break
+        try:
+            new_q = safe_llm_invoke(REWRITE_PROMPT.format_messages(
+                question=question, previous_query=query
+            )).content.strip()
+        except Exception:
+            break
+        if not new_q or new_q == query:
+            break
+        query = new_q
+        rewrites.append(new_q)
+
+    return docs[:top_k], {"rewrites": rewrites, "attempts": attempts}
 
 
 # ---------------- 主流程 ----------------
@@ -177,6 +209,8 @@ def main() -> None:
     parser.add_argument("--top-k", type=int, default=10, help="单策略最大检索条数（默认 10）")
     parser.add_argument("--limit", type=int, default=0, help="只评估前 N 个问题（0=全部）")
     parser.add_argument("--partition", type=str, default=None, help="限定分区搜索（如 txt/pdf）")
+    parser.add_argument("--collection", type=str, default=None,
+                        help="指定 Milvus 集合（消融实验用，如 kb_adaptive）")
     parser.add_argument("--strategies", nargs="+", default=STRATEGIES,
                         help="要对比的策略，默认全部五条")
     args = parser.parse_args()
@@ -187,7 +221,7 @@ def main() -> None:
 
     connect_milvus()
     print("[1/4] 拉取语料父块 ...")
-    parents = fetch_all_parents()
+    parents = fetch_all_parents(args.collection)
     print(f"      父块总数（去重后）: {len(parents)}")
 
     print("[2/4] 加载标注集并计算 gold 集合 ...")
@@ -212,13 +246,17 @@ def main() -> None:
         level = item.get("level", "A_事实单跳")
         qvec = embed_query(question)
         qsparse = embed_query_sparse(question)
-        dense = search_dense(qvec, top_k=args.top_k, partition_name=args.partition)
-        sparse = search_sparse(qsparse, top_k=args.top_k, partition_name=args.partition)
+        dense = search_dense(qvec, top_k=args.top_k, partition_name=args.partition,
+                             collection_name=args.collection)
+        sparse = search_sparse(qsparse, top_k=args.top_k, partition_name=args.partition,
+                               collection_name=args.collection)
 
-        row = {"question": question, "level": level, "gold_count": len(gold)}
+        row = {"question": question, "level": level,
+               "doc_type": item.get("doc_type", ""), "gold_count": len(gold)}
         for strategy in strategies:
             ranked_parents, extra = retrieve_strategy(
-                strategy, question, dense, sparse, args.top_k, gold, parent_to_idx
+                strategy, question, dense, sparse, args.top_k, gold, parent_to_idx,
+                collection_name=args.collection
             )
             ranked_idx = [parent_to_idx[p] for p in _dedupe(ranked_parents) if p in parent_to_idx]
             for k in ks:
@@ -265,11 +303,23 @@ def main() -> None:
             level_stats[lv]["strategies"].setdefault(strategy, []).append(
                 row.get(f"{strategy}_recall@{k_std}", 0.0))
 
+    # 按 doc_type 分层的 Recall@k_std 统计
+    doc_type_stats = {}
+    for row in per_question:
+        dt = row.get("doc_type", "未知")
+        if dt not in doc_type_stats:
+            doc_type_stats[dt] = {"count": 0, "strategies": {}}
+        doc_type_stats[dt]["count"] += 1
+        for strategy in strategies:
+            doc_type_stats[dt]["strategies"].setdefault(strategy, []).append(
+                row.get(f"{strategy}_recall@{k_std}", 0.0))
+
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     md_path = REPORT_DIR / "retrieval_eval.md"
     json_path = REPORT_DIR / "retrieval_eval.json"
     json_path.write_text(
         json.dumps({"summary": summary, "ci": ci, "level_stats": level_stats,
+                    "doc_type_stats": doc_type_stats,
                     "per_question": per_question,
                     "corpus_size": len(parents), "question_count": len(questions),
                     "total_rewrites": rewrite_count},
@@ -330,6 +380,18 @@ def main() -> None:
     lines.append("|------|------|" + "|".join(["------"] * len(strategies)) + "|")
     for lv, st in level_stats.items():
         cells = [lv, str(st["count"])]
+        for s in strategies:
+            vals = st["strategies"][s]
+            cells.append(f"{sum(vals) / len(vals):.3f}")
+        lines.append("| " + " | ".join(cells) + " |")
+    lines.append("")
+
+    lines.append("## 按文档类型分层（Recall@" + str(k_std) + "）")
+    lines.append("")
+    lines.append("| 文档类型 | 题数 | " + " | ".join(s for s in strategies) + " |")
+    lines.append("|------|------|" + "|".join(["------"] * len(strategies)) + "|")
+    for dt, st in doc_type_stats.items():
+        cells = [dt, str(st["count"])]
         for s in strategies:
             vals = st["strategies"][s]
             cells.append(f"{sum(vals) / len(vals):.3f}")

@@ -1,6 +1,19 @@
 .env
 __pycache__/
 *.pyc
+.pytest_cache/
 SmartQuery/model/.cache/
+
+# 数据（上传暂存 / 临时文件）
 data/docs/*
-logs/*.log
+data/corpus/数据报表/*_temp.csv
+
+# 评测报告（运行脚本生成，不入库）
+SmartQuery/evaluation/report/
+
+# 日志
+logs/
+
+# 前端
+frontend/node_modules/
+frontend/dist/

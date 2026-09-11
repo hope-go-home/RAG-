@@ -1,6 +1,6 @@
 from SmartQuery.backend.config import MYSQL_HOST,MYSQL_PORT,MYSQL_USER,MYSQL_PASSWORD,MYSQL_DATABASE
 from SmartQuery.backend.logger import get_logger
-from sqlalchemy import create_engine,Column,Integer,String,Text,DateTime
+from sqlalchemy import create_engine,Column,Integer,String,Text,DateTime,func
 from sqlalchemy.orm import sessionmaker,declarative_base
 #sessionmaker 用于生成 Session 类（或会话工厂）。Session 是 ORM 中与数据库进行交互的“工作单元”，负责管理对象的持久化操作（增删改查）、事务边界等。
 from datetime import datetime
@@ -51,6 +51,40 @@ def get_history(session_id: str) -> list[dict]:
         {"question": r.question, "answer": r.answer, "created_at": str(r.created_at)}
         for r in records
     ]
+
+
+def list_sessions(limit: int = 50) -> list[dict]:
+    """按会话聚合，返回每个会话的首问、末次时间、问答条数（用于历史会话列表）"""
+    db = SessionLocal()
+    try:
+        rows = (
+            db.query(
+                ChatRecord.session_id,
+                func.min(ChatRecord.id).label("first_id"),
+                func.max(ChatRecord.created_at).label("last_time"),
+                func.count(ChatRecord.id).label("count"),
+            )
+            .group_by(ChatRecord.session_id)
+            .order_by(func.max(ChatRecord.created_at).desc())
+            .limit(limit)
+            .all()
+        )
+        result = []
+        for r in rows:
+            first_question = (
+                db.query(ChatRecord.question)
+                .filter(ChatRecord.id == r.first_id)
+                .scalar()
+            )
+            result.append({
+                "session_id": r.session_id,
+                "first_question": first_question or "",
+                "last_time": str(r.last_time),
+                "count": r.count,
+            })
+        return result
+    finally:
+        db.close()
 
 
 # ---------------- 文件注册表（重复入库检测）---------------- #

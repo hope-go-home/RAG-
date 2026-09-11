@@ -12,7 +12,18 @@ sys.modules["FlagEmbedding"] = MagicMock()
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from SmartQuery.rag.ingest import clean_text, _split_by_headers, _split_by_sentences, clean_documents
+from SmartQuery.rag.ingest import (
+    clean_text,
+    clean_documents,
+    _split_by_headers,
+    _split_by_articles,
+    _split_faq,
+    _split_by_steps,
+    _split_by_sections,
+    _split_by_table,
+    _whole_document,
+    get_partition,
+)
 from langchain_core.documents import Document
 
 
@@ -51,15 +62,81 @@ class TestSplitByHeaders:
         assert r[0].startswith("#")
 
 
-class TestSplitBySentences:
-    def test_chinese_periods(self):
-        assert len(_split_by_sentences("句一。句二。句三。")) == 3
+class TestSplitByArticles:
+    def test_two_articles(self):
+        text = "第一条 内容一。\n第二条 内容二。"
+        r = _split_by_articles(text)
+        assert len(r) == 2
+        assert "第一条" in r[0] and "第二条" in r[1]
 
-    def test_mixed(self):
-        assert len(_split_by_sentences("问？叹！句。")) == 3
+    def test_no_articles(self):
+        assert _split_by_articles("纯文本") == ["纯文本"]
 
-    def test_empty(self):
-        assert _split_by_sentences("") == []
+    def test_article_not_broken(self):
+        text = "第一条 第一条的内容包含很多信息。\n第二条 第二条内容。"
+        r = _split_by_articles(text)
+        assert "第一条的内容" in r[0]
+
+
+class TestSplitFaq:
+    def test_qa_pairs(self):
+        text = "Q: 问题一？\nA: 答案一。\nQ: 问题二？\nA: 答案二。"
+        r = _split_faq(text)
+        assert len(r) == 2
+        assert "问题一" in r[0] and "问题二" in r[1]
+
+    def test_no_qa(self):
+        assert _split_faq("纯文本") == ["纯文本"]
+
+
+class TestSplitBySteps:
+    def test_numbered_steps(self):
+        text = "步骤1：第一步\n内容一\n步骤2：第二步\n内容二"
+        r = _split_by_steps(text)
+        assert len(r) == 2
+
+    def test_arabic_numbering(self):
+        text = "1. 第一项\n内容一\n2. 第二项\n内容二"
+        r = _split_by_steps(text)
+        assert len(r) == 2
+
+    def test_no_steps(self):
+        assert _split_by_steps("纯文本") == ["纯文本"]
+
+
+class TestSplitBySections:
+    def test_sections(self):
+        text = "## 第一节\n内容一\n## 第二节\n内容二"
+        r = _split_by_sections(text)
+        assert len(r) == 2
+
+    def test_code_block_not_broken(self):
+        text = "## 代码\n说明\n```python\nprint(1)\nprint(2)\n```\n结束"
+        r = _split_by_sections(text)
+        joined = "\n".join(r)
+        assert "print(1)" in joined and "print(2)" in joined
+
+
+class TestSplitByTable:
+    def test_table_preserved(self):
+        text = "| 列1 | 列2 |\n|-----|-----|\n| a | b |\n| c | d |"
+        r = _split_by_table(text)
+        joined = "\n".join(r)
+        assert "| a | b |" in joined and "| c | d |" in joined
+
+
+class TestWholeDocument:
+    def test_single_block(self):
+        assert _whole_document("短文") == ["短文"]
+
+
+class TestGetPartition:
+    def test_known_ext(self):
+        assert get_partition("a.md") == "md"
+        assert get_partition("a.xlsx") == "xlsx"
+
+    def test_unknown_ext_fallback(self):
+        assert get_partition("a.xyz") == "txt"
 
 
 class TestCleanDocuments:

@@ -2,7 +2,7 @@ import json
 import hashlib
 import time
 import threading
-from fastapi import FastAPI, UploadFile, File, Query, Request
+from fastapi import FastAPI, UploadFile, File, Query, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -106,7 +106,7 @@ async def chat_stream(request: ChatRequest):
     async def event_generator():
         accumulated = {}  # 累积所有节点的输出，避免后一节点覆盖前一节点的字段
         in_answer = False  # 只在 generate/direct_answer 节点中推送 token
-        NODES = {"query_analysis", "retrieve", "generate", "direct_answer"}
+        NODES = {"query_analysis", "retrieve", "rewrite", "generate", "direct_answer"}
         try:
             async for event in rag_agent.astream_events(initial_state, version="v2"):
                 kind = event["event"]
@@ -170,7 +170,7 @@ async def chat_stream(request: ChatRequest):
 # 支持一次传多个文件；按内容 SHA-256 哈希查重，重复文件自动跳过
 # 请求格式：multipart/form-data，字段名 "files"（兼容单文件字段 "file"）
 
-SUPPORTED_EXTS = {"pdf", "docx", "txt", "md"}
+SUPPORTED_EXTS = {"pdf", "docx", "txt", "md", "xlsx"}
 
 
 def _file_sha256(path: str) -> str:
@@ -182,7 +182,7 @@ def _file_sha256(path: str) -> str:
 
 
 @app.post("/upload")
-async def upload(files: list[UploadFile] = File(...)):
+async def upload(files: list[UploadFile] = File(...), doc_type: str = Form(default="员工手册")):
     results = []
     logger.info("upload start files=%d", len(files))
     for file in files:
@@ -219,7 +219,7 @@ async def upload(files: list[UploadFile] = File(...)):
             continue
 
         try:
-            count = ingest_file(save_path)
+            count = ingest_file(save_path, doc_type=doc_type)
             partition = get_partition(save_path)
             save_file_record(file_hash, file.filename, partition, count)
             logger.info("upload success file=%s chunks=%d partition=%s", file.filename, count, partition)
@@ -243,6 +243,13 @@ async def upload(files: list[UploadFile] = File(...)):
 def history(session_id: str):
     from SmartQuery.backend.database.mysql import get_history
     return get_history(session_id)
+
+
+@app.get("/sessions")
+def sessions(limit: int = 50):
+    """历史会话列表（按末次时间倒序）"""
+    from SmartQuery.backend.database.mysql import list_sessions
+    return list_sessions(limit)
 
 
 # ------------------ 内部辅助函数 ------------------ #

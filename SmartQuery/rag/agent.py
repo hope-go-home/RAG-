@@ -11,21 +11,26 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = get_logger(__name__)
 
+# 检索质量不足时，最多改写重检到第几轮（含首轮）
+MAX_RETRIEVAL_ATTEMPTS = 3
+# 重排序分数阈值（reranker 输出已是 0-1：相关约 0.9+，不相关约 0）
+RERANK_SCORE_THRESHOLD = 0.5
+
 
 # ==================== State 定义 ====================
 
 class GraphState(TypedDict):
     # ------ 核心字段 ------
     question: str               # 用户原始问题
+    search_query: str           # 意图分析优化后的检索词
     context: list[str]          # 检索到的父块文档列表
     answer: str                 # LLM 生成的回答
     intent: str                 # 意图分类：rag_query / chit_chat / meta / follow_up
     chat_history: list[dict]    # 多轮对话历史 [{role, content}, ...]
 
     # ------ 检索控制 ------
-    retrieval_count: int            # 已经检索了几次
-    max_retrieval_attempts: int     # 最大检索次数，默认 1（简化后）
-    need_retrieve: bool             # 文档评分不足时置为 True，触发重检
+    retrieval_attempts: int     # 已检索轮数
+    need_retrieve: bool         # 检索质量不足，需改写后重检
 
     # ------ 前端可见 ------
     thinking_steps: list[dict]      # [{node, status, info}, ...] 前端思考面板展示
@@ -100,25 +105,27 @@ QUERY_ANALYSIS_PROMPT = ChatPromptTemplate.from_template("""分析用户问题�
 
 def query_analysis_node(state: GraphState) -> dict:
     history_str = _format_history(state.get("chat_history", []), max_turns=4)
+    search_query = state["question"]
     try:
         result = safe_llm_invoke(QUERY_ANALYSIS_PROMPT.format_messages(
             chat_history=history_str, question=state["question"]
         )).content.strip()
         parsed = _safe_json_parse(result, {"intent": "rag_query"})
         intent = parsed.get("intent", "rag_query")
+        search_query = parsed.get("search_query") or search_query
     except Exception:
         intent = "rag_query"
         logger.warning("query_analysis fallback to default for question=%s", state["question"][:80])
 
-    logger.info("query_analysis intent=%s", intent)
+    logger.info("query_analysis intent=%s search_query=%s", intent, search_query[:60])
 
     step = {"node": "query_analysis", "status": "done", "info": f"意图：{intent}"}
 
     return {
         "intent": intent,
-        "retrieval_count": 0,
-        "max_retrieval_attempts": 1,
-        "need_retrieve": True,
+        "search_query": search_query,
+        "retrieval_attempts": 0,
+        "need_retrieve": False,
         "thinking_steps": state.get("thinking_steps", []) + [step],
     }
 
@@ -127,9 +134,9 @@ def query_analysis_node(state: GraphState) -> dict:
 # 使用 retrieve_with_meta 获取带元数据的结果，供前端展示和文档评分使用
 
 def retrieve_node(state: GraphState) -> dict:
-    search_query = state["question"]
+    search_query = state.get("search_query") or state["question"]
+    attempts = state.get("retrieval_attempts", 0) + 1
     result: RetrievalResult = retrieve_with_meta(search_query, top_k=10)
-    count = state.get("retrieval_count", 0) + 1
 
     # 组装前端可展示的来源列表
     sources_for_ui = []
@@ -140,28 +147,29 @@ def retrieve_node(state: GraphState) -> dict:
             "sparse_rank": s.sparse_rank,
             "rrf_score": s.rrf_score,
             "rerank_score": s.rerank_score,
+            "doc_type": s.doc_type,
         })
 
-    # 使用 reranker 分数阈值判断是否需要重检（简化，不再用 LLM 打分）
     max_rerank_score = max([s.rerank_score for s in result.sources]) if result.sources else 0.0
-    RERANK_THRESHOLD = 0.5  # reranker 分数阈值
-    need_retrieve = max_rerank_score < RERANK_THRESHOLD
+    # reranker 输出已是 0-1 概率（相关约 0.9+，不相关约 0），直接与阈值比较
+    need_retrieve = max_rerank_score < RERANK_SCORE_THRESHOLD and attempts < MAX_RETRIEVAL_ATTEMPTS
 
     step = {
         "node": "retrieve",
         "status": "done",
-        "info": f"第 {count} 次检索：稠密命中 {result.dense_hit_count}，稀疏命中 {result.sparse_hit_count}，融合得 {result.fused_count} 篇，返回 {len(result.documents)} 篇，最高 rerank 分数 {max_rerank_score:.3f}",
+        "info": f"第 {attempts} 轮：稠密 {result.dense_hit_count}，稀疏 {result.sparse_hit_count}，"
+                f"融合 {result.fused_count} 篇，返回 {len(result.documents)} 篇，最高重排分 {max_rerank_score:.3f}",
     }
     logger.info(
-        "retrieve count=%d query=%s dense=%d sparse=%d fused=%d returned=%d max_rerank=%.3f",
-        count, search_query[:60], result.dense_hit_count, result.sparse_hit_count,
-        result.fused_count, len(result.documents), max_rerank_score,
+        "retrieve attempt=%d query=%s dense=%d sparse=%d fused=%d returned=%d max_rerank=%.3f need_retrieve=%s",
+        attempts, search_query[:60], result.dense_hit_count, result.sparse_hit_count,
+        result.fused_count, len(result.documents), max_rerank_score, need_retrieve,
     )
 
     return {
         "context": result.documents,
         "retrieval_sources": sources_for_ui,
-        "retrieval_count": count,
+        "retrieval_attempts": attempts,
         "need_retrieve": need_retrieve,
         "retrieval_stats": {
             "dense_hits": result.dense_hit_count,
@@ -169,6 +177,41 @@ def retrieve_node(state: GraphState) -> dict:
             "fused_count": result.fused_count,
             "reranked_count": len(result.documents),
         },
+        "thinking_steps": state.get("thinking_steps", []) + [step],
+    }
+
+
+# ==================== 节点 2.5：rewrite（检索质量不足时改写检索词）====================
+# 由 route_after_retrieve 判定 need_retrieve=True 时进入，改写后回到 retrieve 重检
+
+REWRITE_PROMPT = ChatPromptTemplate.from_template("""上一次检索没有找到足够相关的资料，请为下面的问题换一种更适合检索的查询词。
+
+原问题：{question}
+上一次查询：{previous_query}
+
+要求：使用同义词或更具体的关键词，只输出新的查询词，不要任何解释。""")
+
+def rewrite_node(state: GraphState) -> dict:
+    previous = state.get("search_query") or state["question"]
+    try:
+        new_query = safe_llm_invoke(REWRITE_PROMPT.format_messages(
+            question=state["question"], previous_query=previous
+        )).content.strip()
+    except Exception:
+        new_query = ""
+        logger.warning("rewrite fallback for question=%s", state["question"][:80])
+    if not new_query:
+        new_query = state["question"]
+
+    logger.info("rewrite from=%s to=%s", previous[:40], new_query[:40])
+
+    step = {
+        "node": "rewrite",
+        "status": "done",
+        "info": f"检索质量不足，改写检索词：{new_query[:50]}",
+    }
+    return {
+        "search_query": new_query,
         "thinking_steps": state.get("thinking_steps", []) + [step],
     }
 
@@ -258,6 +301,13 @@ def route_after_analysis(state: GraphState) -> str:
     return "retrieve"  # rag_query / follow_up 都走检索
 
 
+def route_after_retrieve(state: GraphState) -> str:
+    """retrieve 之后：质量不足且未达轮数上限则改写重检，否则生成"""
+    if state.get("need_retrieve"):
+        return "rewrite"
+    return "generate"
+
+
 # ==================== 构建工作流 ====================
 
 workflow = StateGraph(GraphState)
@@ -265,6 +315,7 @@ workflow = StateGraph(GraphState)
 # 注册节点
 workflow.add_node("query_analysis", query_analysis_node)
 workflow.add_node("retrieve", retrieve_node)
+workflow.add_node("rewrite", rewrite_node)
 workflow.add_node("generate", generate_node)
 workflow.add_node("direct_answer", direct_answer_node)
 
@@ -277,7 +328,13 @@ workflow.add_conditional_edges(
     {"retrieve": "retrieve", "direct_answer": "direct_answer"},
 )
 
-workflow.add_edge("retrieve", "generate")
+workflow.add_conditional_edges(
+    "retrieve",
+    route_after_retrieve,
+    {"rewrite": "rewrite", "generate": "generate"},
+)
+
+workflow.add_edge("rewrite", "retrieve")
 workflow.add_edge("generate", END)
 workflow.add_edge("direct_answer", END)
 
