@@ -35,7 +35,7 @@ from SmartQuery.backend.auth import (
     require_admin,
 )
 from SmartQuery.rag.agent import app as rag_agent
-from SmartQuery.rag.ingest import ingest_file, get_partition
+from SmartQuery.rag.ingest import ingest_file, get_partition, is_scanned
 
 logger = get_logger(__name__)
 
@@ -352,17 +352,20 @@ async def upload(request: Request, files: list[UploadFile] = File(...),
             continue
 
         try:
+            used_ocr = is_scanned(save_path)
             if existing:
                 # 增量更新：先删除旧块，再重新入库
                 delete_by_source(source)
             count = ingest_file(save_path, doc_type=doc_type, department=department, source=source)
             rec = upsert_document(source, save_path, file_hash, doc_type, department, count)
-            logger.info("upload %s file=%s chunks=%d version=%d",
-                        "updated" if existing else "success", source, count, rec["version"])
+            logger.info("upload %s file=%s chunks=%d version=%d ocr=%s",
+                        "updated" if existing else "success", source, count, rec["version"], used_ocr)
             results.append({
                 "file": source,
                 "status": "updated" if existing else "success",
-                "message": f"{'更新' if existing else '成功入库'} {count} 块（v{rec['version']}）",
+                "ocr": used_ocr,
+                "message": f"{'更新' if existing else '成功入库'} {count} 块（v{rec['version']}）"
+                           + ("，OCR 识别" if used_ocr else ""),
             })
         except Exception as e:
             logger.error("upload failed file=%s error=%s", source, e, exc_info=True)

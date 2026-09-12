@@ -449,6 +449,20 @@ button.panel-meta:hover { color: var(--signal); }
 .result.success { border-left-color: var(--t-data); color: var(--t-data); }
 .result.duplicate { border-left-color: var(--t-sop); color: var(--t-sop); }
 .result.failed { border-left-color: var(--signal); color: var(--signal); }
+.result.updated { border-left-color: var(--t-tech); color: var(--t-tech); }
+
+.result-ocr {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--card);
+  background: var(--t-tech);
+  border-radius: 2px;
+  padding: 0 4px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
 
 /* ========================== 历史记录 ========================== */
 

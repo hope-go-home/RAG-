@@ -68,6 +68,21 @@ def load_file(file_path: str, doc_type: str = "员工手册") -> list[Document]:
     return docs
 
 
+def is_scanned(file_path: str) -> bool:
+    """判断是否需要 OCR：图片文件，或文本层过短的 PDF（扫描件）"""
+    ext = file_path.rsplit(".", 1)[-1].lower()
+    if ext in ("png", "jpg", "jpeg", "bmp", "tiff"):
+        return True
+    if ext == "pdf":
+        try:
+            docs = PyMuPDFLoader(file_path).load()
+            total = sum(len(d.page_content.strip()) for d in docs)
+            return total < 50
+        except Exception:
+            return False
+    return False
+
+
 def _load_xlsx(file_path: str):
     """用 openpyxl 读取，转成 Markdown 表格文本（表格整体保留，便于结构化检索）"""
     from openpyxl import load_workbook

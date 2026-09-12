@@ -56,7 +56,7 @@ async function handleUpload() {
   <section class="panel">
     <header class="panel-head">
       <h3 class="panel-label">文档入库</h3>
-      <span class="panel-meta">pdf · docx · md · xlsx</span>
+      <span class="panel-meta">pdf · docx · md · xlsx · 图片</span>
     </header>
     <div class="panel-body">
       <div
@@ -69,7 +69,7 @@ async function handleUpload() {
       >
         <div class="drop-plus">＋</div>
         <div class="drop-main">{{ files.length ? `已选 ${files.length} 份` : '点击或拖入文件' }}</div>
-        <div class="drop-hint">PDF / WORD / TXT / MD / EXCEL</div>
+        <div class="drop-hint">PDF / WORD / TXT / MD / EXCEL / 图片(OCR)</div>
         <input
           ref="fileInput"
           type="file"
@@ -106,7 +106,7 @@ async function handleUpload() {
 
       <div v-if="results.length" class="results">
         <div v-for="(r, i) in results" :key="i" :class="['result', r.status]">
-          {{ r.file }} · {{ r.message }}
+          <span v-if="r.ocr" class="result-ocr">OCR</span>{{ r.file }} · {{ r.message }}
         </div>
       </div>
     </div>
