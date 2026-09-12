@@ -11,6 +11,9 @@ QWEN_MODEL = os.getenv("QWEN_MODEL")
 #嵌入模型
 QWEN_EMBEDDING_MODEL = os.getenv("QWEN_EMBEDDING_MODEL")
 
+# 视觉/OCR 模型（扫描件、图片识别）
+QWEN_VL_OCR_MODEL = os.getenv("QWEN_VL_OCR_MODEL", "qwen-vl-max")
+
 MYSQL_HOST = os.getenv("MYSQL_HOST")
 MYSQL_PORT = int(os.getenv("MYSQL_PORT"))
 MYSQL_USER = os.getenv("MYSQL_USER")

@@ -49,7 +49,7 @@ from SmartQuery.backend.database.milvus import (
     search_sparse,
 )
 from SmartQuery.rag.embedding import embed_query, embed_query_sparse
-from SmartQuery.rag.retriever import rrf_fusion, retrieve_with_meta
+from SmartQuery.rag.retriever import rrf_fusion, retrieve_with_meta, retrieve_multi_query
 from SmartQuery.rag.agent import (
     safe_llm_invoke,
     REWRITE_PROMPT,
@@ -60,7 +60,7 @@ from SmartQuery.rag.agent import (
 EVAL_DIR = Path(__file__).resolve().parent
 GOLDEN_FILE = EVAL_DIR / "golden_set.json"
 REPORT_DIR = EVAL_DIR / "report"
-STRATEGIES = ["dense_only", "sparse_only", "hybrid_rrf", "hybrid_rerank", "agentic"]
+STRATEGIES = ["dense_only", "sparse_only", "hybrid_rrf", "hybrid_rerank", "hybrid_multiquery", "agentic"]
 TOP_KS = [1, 3, 5, 10]
 
 
@@ -173,6 +173,8 @@ def retrieve_strategy(strategy: str, question: str, dense: list, sparse: list,
         return rrf_fusion(dense, sparse)[:top_k], {}
     if strategy == "hybrid_rerank":
         return retrieve_with_meta(question, top_k=top_k, collection_name=collection_name).documents, {}
+    if strategy == "hybrid_multiquery":
+        return retrieve_multi_query(question, top_k=top_k, collection_name=collection_name).documents, {}
 
     # ---- agentic：质量不足时 LLM 改写检索词重检，合并多轮结果 ----
     docs: list[str] = []
@@ -355,23 +357,19 @@ def main() -> None:
         )
         lines.append(f"| {strategy} | " + " | ".join(cells) + " |")
 
-    lines += ["", "## 分阶段提升（Recall@" + str(k_std) + "）", ""]
+    lines += ["", "## 分阶段提升（多指标）", ""]
     steps = [("纯稠密基线", "dense_only"), ("+混合检索(RRF)", "hybrid_rrf"),
-             ("+重排序", "hybrid_rerank"), ("+Agentic重检", "agentic")]
-    lines.append(f"| 阶段 | Recall@{k_std} (95%CI) | 相对上一阶段提升 |")
-    lines.append("|------|------|------|")
-    base_key = steps[0][1]
-    lines.append(f"| {steps[0][0]} | {summary[base_key][f'recall@{k_std}']} " +
-                 f"({ci[base_key][f'recall@{k_std}']}) | - |")
-    prev_val = base_key
-    for name, key in steps[1:]:
+             ("+重排序", "hybrid_rerank"), ("+多查询召回", "hybrid_multiquery"),
+             ("+Agentic重检", "agentic")]
+    metric_cols = [m for m in ["recall@1", "recall@5", "recall@10", "mrr@5", "ndcg@5", "hit_rate@10"]
+                   if m in summary[steps[0][1]]]
+    lines.append("| 阶段 | " + " | ".join(metric_cols) + " |")
+    lines.append("|------|" + "|".join(["------"] * len(metric_cols)) + "|")
+    for name, key in steps:
         if key not in summary:
             continue
-        cur = summary[key][f"recall@{k_std}"]
-        lo, hi = ci[key][f"recall@{k_std}"]
-        gain = (cur - summary[prev_val][f"recall@{k_std}"]) * 100
-        lines.append(f"| {name} | {cur} [{lo}, {hi}] | +{gain:.1f}pp |")
-        prev_val = key
+        cells = [str(summary[key].get(m, "-")) for m in metric_cols]
+        lines.append(f"| {name} | " + " | ".join(cells) + " |")
     lines.append("")
 
     lines.append("## 分层评测（Recall@" + str(k_std) + "）")
@@ -410,18 +408,17 @@ def main() -> None:
         lines.append("| " + " | ".join(cells) + " |")
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    print(f"\n===== 召回率分阶段对比（均值±95%CI, k={k_std}）=====")
-    base = summary["dense_only"][f"recall@{k_std}"]
-    blo, bhi = ci["dense_only"][f"recall@{k_std}"]
-    print(f"纯稠密基线         : {base} [{blo}, {bhi}]")
-    prev = base
-    for name, key in [("+混合检索(RRF)", "hybrid_rrf"), ("+重排序", "hybrid_rerank"), ("+Agentic重检", "agentic")]:
+    print(f"\n===== 检索链路分阶段对比（均值）=====")
+    print(f"{'策略':<16}{'R@1':>8}{'R@5':>8}{'R@10':>8}{'MRR@5':>9}{'nDCG@5':>9}{'Hit@10':>8}")
+    for name, key in [("纯稠密基线", "dense_only"), ("+混合检索(RRF)", "hybrid_rrf"),
+                      ("+重排序", "hybrid_rerank"), ("+多查询召回", "hybrid_multiquery"),
+                      ("+Agentic重检", "agentic")]:
         if key not in summary:
             continue
-        cur = summary[key][f"recall@{k_std}"]
-        lo, hi = ci[key][f"recall@{k_std}"]
-        print(f"{name:<18}: {cur} [{lo}, {hi}]  (+{(cur - prev) * 100:.1f}pp, 累计 +{(cur - base) * 100:.1f}pp)")
-        prev = cur
+        s = summary[key]
+        print(f"{name:<16}{s.get('recall@1', 0):>8}{s.get('recall@5', 0):>8}"
+              f"{s.get('recall@10', 0):>8}{s.get('mrr@5', 0):>9}{s.get('ndcg@5', 0):>9}"
+              f"{s.get('hit_rate@10', 0):>8}")
     print(f"\n报告已生成：{md_path}")
 
 

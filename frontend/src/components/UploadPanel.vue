@@ -2,9 +2,11 @@
 import { ref } from 'vue'
 import { uploadFiles } from '../api/index'
 import { DOC_TYPES } from '../utils/docTypes'
+import { DEPARTMENTS, DEFAULT_DEPARTMENT } from '../utils/departments'
 
 const files = ref([])
 const docType = ref(DOC_TYPES[0].name)
+const department = ref(DEFAULT_DEPARTMENT)
 const uploading = ref(false)
 const results = ref([])
 const over = ref(false)
@@ -34,7 +36,7 @@ async function handleUpload() {
   uploading.value = true
   results.value = []
   try {
-    const res = await uploadFiles(files.value, docType.value)
+    const res = await uploadFiles(files.value, docType.value, department.value)
     results.value = res.results || []
     files.value = []
     if (fileInput.value) fileInput.value.value = ''
@@ -72,7 +74,7 @@ async function handleUpload() {
           ref="fileInput"
           type="file"
           multiple
-          accept=".pdf,.docx,.txt,.md,.xlsx"
+          accept=".pdf,.docx,.txt,.md,.xlsx,.png,.jpg,.jpeg"
           style="display: none"
           @change="onFileChange"
         />
@@ -88,6 +90,13 @@ async function handleUpload() {
           <span class="type-dot" :style="{ background: d.color }" />{{ d.short }}
         </button>
       </div>
+
+      <label class="dept dept-block">
+        <span class="dept-label">归属部门</span>
+        <select v-model="department" class="dept-select">
+          <option v-for="d in DEPARTMENTS" :key="d" :value="d">{{ d }}</option>
+        </select>
+      </label>
 
       <div class="field-row">
         <button class="btn" style="flex: 1" :disabled="!files.length || uploading" @click="handleUpload">

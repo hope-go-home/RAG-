@@ -5,12 +5,13 @@ const http = axios.create({
   timeout: 300000,
 })
 
-export async function uploadFiles(files, docType) {
+export async function uploadFiles(files, docType, department) {
   const formData = new FormData()
   for (const file of files) {
     formData.append('files', file)
   }
   formData.append('doc_type', docType)
+  if (department) formData.append('department', department)
   const { data } = await http.post('/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })

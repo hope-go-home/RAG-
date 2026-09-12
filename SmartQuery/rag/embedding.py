@@ -21,6 +21,8 @@ embeddings = OpenAIEmbeddings(
 
 
 def embed_documents(texts: list[str]) -> list[list[float]]:
+    if not texts:
+        return []
     return embeddings.embed_documents(texts)
 #定义一个函数，接收一个字符串列表 texts，返回类型为 list[list[float]]，即每个输入文本对应一个浮点数向量（列表形式） 批量编码多个文档（如知识库段落）
 """
@@ -41,6 +43,8 @@ def embed_query_sparse(text: str) -> dict[int, float]:
     return {int(t): float(w) for t, w in raw.items()}
 
 def embed_documents_sparse(texts: list[str]) -> list[dict[int, float]]:
+    if not texts:
+        return []
     output = sparse_model.encode(texts, return_sparse=True, return_dense=False)
     results = []
     for raw in output['lexical_weights']:

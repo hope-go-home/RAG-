@@ -1,7 +1,11 @@
 """
-批量语料入库脚本
-================
+批量语料入库脚本（批量嵌入版）
+==============================
 遍历 data/corpus/<文档类型>/ 下的所有文件，按文件夹名作为 doc_type 入库。
+
+关键优化：先把所有文件解析、切分，收集全部子块，再**一次性批量嵌入**，
+最后分文件写入 Milvus。这样摊薄了稀疏模型（BGE-M3）每次调用的固定开销，
+比逐文件嵌入快数倍。
 
 用法：
   python scripts/load_corpus.py                 # 全量入库
@@ -15,21 +19,30 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from SmartQuery.backend.database.milvus import (
     COLLECTION_NAME,
     connect_milvus,
     create_collection,
     drop_collection,
+    insert_documents,
 )
-from SmartQuery.rag.ingest import ingest_file
+from SmartQuery.rag.ingest import (
+    clean_documents,
+    get_partition,
+    load_file,
+    split_documents,
+)
+from SmartQuery.rag.embedding import embed_documents, embed_documents_sparse
+from corpus_meta import department_of
 
 CORPUS_DIR = Path(__file__).resolve().parents[1] / "data" / "corpus"
-SUPPORTED_EXTS = {".md", ".txt", ".pdf", ".docx", ".xlsx"}
+SUPPORTED_EXTS = {".md", ".txt", ".pdf", ".docx", ".xlsx", ".png", ".jpg", ".jpeg"}
 
 
 def iter_corpus(doc_type: str | None = None):
-    """遍历语料目录，产出 (文件路径, 文档类型)"""
+    """遍历语料目录，产出 (文件路径, 文档类型, 所属部门)"""
     if not CORPUS_DIR.exists():
         raise SystemExit(f"语料目录不存在：{CORPUS_DIR}")
     for type_dir in sorted(CORPUS_DIR.iterdir()):
@@ -39,12 +52,13 @@ def iter_corpus(doc_type: str | None = None):
             continue
         for file in sorted(type_dir.iterdir()):
             if file.suffix.lower() in SUPPORTED_EXTS:
-                yield file, type_dir.name
+                yield file, type_dir.name, department_of(file.name)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="企业语料批量入库")
     parser.add_argument("--doc-type", default=None, help="只入库指定文档类型")
+    parser.add_argument("--strategy", default="adaptive", help="分块策略")
     parser.add_argument("--reset", action="store_true", help="入库前删除集合")
     args = parser.parse_args()
 
@@ -56,25 +70,49 @@ def main() -> None:
     files = list(iter_corpus(args.doc_type))
     print(f"待入库文件数：{len(files)}")
 
-    total_chunks = 0
-    failed = []
-    t0 = time.time()
-    for i, (file, doc_type) in enumerate(files, start=1):
+    # 1) 解析 + 切分，收集所有子块
+    jobs = []
+    for file, doc_type, dept in files:
         try:
-            count = ingest_file(str(file), doc_type=doc_type)
-            total_chunks += count
-            print(f"[{i}/{len(files)}] {doc_type}/{file.name} -> {count} 块")
+            docs = clean_documents(load_file(str(file), doc_type=doc_type))
+            child, parent = split_documents(docs, doc_type=doc_type, strategy=args.strategy)
+            if not child:
+                print(f"  跳过（无块）：{file.name}")
+                continue
+            jobs.append((file, doc_type, dept, child, parent, get_partition(str(file))))
         except Exception as e:
-            failed.append((file.name, str(e)))
-            print(f"[{i}/{len(files)}] {doc_type}/{file.name} 失败：{e}")
+            print(f"  切分失败 {file.name}：{e}")
 
-    elapsed = time.time() - t0
-    print(f"\n入库完成：集合={COLLECTION_NAME} 文件={len(files) - len(failed)} "
-          f"块={total_chunks} 耗时={elapsed:.1f}s")
-    if failed:
-        print(f"失败 {len(failed)} 个：")
-        for name, err in failed:
-            print(f"  - {name}: {err}")
+    total_chunks = sum(len(j[3]) for j in jobs)
+    print(f"待嵌入块数：{total_chunks}")
+
+    # 2) 一次性批量嵌入（关键：摊薄固定开销）
+    t_embed = time.time()
+    all_children = [c for j in jobs for c in j[3]]
+    dense_vectors = embed_documents(all_children)
+    sparse_vectors = embed_documents_sparse(all_children)
+    print(f"批量嵌入完成：{time.time() - t_embed:.1f}s")
+
+    # 3) 分文件写入 Milvus（先不 flush，最后统一 flush 一次）
+    t_insert = time.time()
+    offset = 0
+    for file, doc_type, dept, child, parent, part in jobs:
+        n = len(child)
+        insert_documents(
+            child, parent,
+            dense_vectors[offset:offset + n],
+            sparse_vectors[offset:offset + n],
+            part, doc_type=doc_type, department=dept, source=file.name, flush=False,
+        )
+        offset += n
+        print(f"  {doc_type}/{dept}/{file.name} -> {n} 块")
+
+    from pymilvus import Collection
+    Collection(name=COLLECTION_NAME).flush()
+    print(f"  flush 完成：{time.time() - t_insert:.1f}s")
+
+    print(f"\n入库完成：集合={COLLECTION_NAME} 文件={len(jobs)} 块={total_chunks} "
+          f"写入耗时={time.time() - t_insert:.1f}s")
 
 
 if __name__ == "__main__":

@@ -60,6 +60,7 @@ session_locks_global = threading.Lock()  # 全局锁（保护 session_locks 字�
 class ChatRequest(BaseModel):
     question: str
     session_id: str | None = None
+    department: str | None = None
 
 
 # ------------------ 启动事件 ------------------ #
@@ -101,7 +102,7 @@ def _sse(event: str, data: dict) -> str:
 @app.post("/chat/stream")
 async def chat_stream(request: ChatRequest):
     sid = request.session_id or uuid.uuid4().hex[:8]
-    initial_state = _build_initial_state(sid, request.question)
+    initial_state = _build_initial_state(sid, request.question, request.department)
 
     async def event_generator():
         accumulated = {}  # 累积所有节点的输出，避免后一节点覆盖前一节点的字段
@@ -170,7 +171,7 @@ async def chat_stream(request: ChatRequest):
 # 支持一次传多个文件；按内容 SHA-256 哈希查重，重复文件自动跳过
 # 请求格式：multipart/form-data，字段名 "files"（兼容单文件字段 "file"）
 
-SUPPORTED_EXTS = {"pdf", "docx", "txt", "md", "xlsx"}
+SUPPORTED_EXTS = {"pdf", "docx", "txt", "md", "xlsx", "png", "jpg", "jpeg"}
 
 
 def _file_sha256(path: str) -> str:
@@ -182,7 +183,8 @@ def _file_sha256(path: str) -> str:
 
 
 @app.post("/upload")
-async def upload(files: list[UploadFile] = File(...), doc_type: str = Form(default="员工手册")):
+async def upload(files: list[UploadFile] = File(...), doc_type: str = Form(default="员工手册"),
+                 department: str = Form(default="公共")):
     results = []
     logger.info("upload start files=%d", len(files))
     for file in files:
@@ -219,7 +221,7 @@ async def upload(files: list[UploadFile] = File(...), doc_type: str = Form(defau
             continue
 
         try:
-            count = ingest_file(save_path, doc_type=doc_type)
+            count = ingest_file(save_path, doc_type=doc_type, department=department)
             partition = get_partition(save_path)
             save_file_record(file_hash, file.filename, partition, count)
             logger.info("upload success file=%s chunks=%d partition=%s", file.filename, count, partition)
@@ -254,9 +256,9 @@ def sessions(limit: int = 50):
 
 # ------------------ 内部辅助函数 ------------------ #
 
-def _build_initial_state(sid: str, question: str) -> dict:
+def _build_initial_state(sid: str, question: str, department: str | None = None) -> dict:
     """构建 Agent 初始状态，复用已有 session 的上下文"""
-    state: dict = {"question": question}
+    state: dict = {"question": question, "department": department or "公共"}
 
     # 获取或创建 session 锁
     with session_locks_global:

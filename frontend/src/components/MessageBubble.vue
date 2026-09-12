@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 const props = defineProps({
   role: { type: String, required: true },
@@ -10,7 +11,8 @@ const props = defineProps({
 
 const rendered = computed(() => {
   if (!props.content) return ''
-  return marked.parse(props.content, { breaks: true, gfm: true })
+  // 知识库文档内容不可信，渲染前必须消毒，防止 XSS
+  return DOMPurify.sanitize(marked.parse(props.content, { breaks: true, gfm: true }))
 })
 </script>
 

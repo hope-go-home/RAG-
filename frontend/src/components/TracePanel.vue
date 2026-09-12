@@ -37,6 +37,7 @@ function fmt(v, digits = 3) {
             <span v-if="fmt(src.rrf_score, 4)" class="trace-metric">RRF {{ fmt(src.rrf_score, 4) }}</span>
             <span v-if="fmt(src.rerank_score)" class="trace-metric">↑ {{ fmt(src.rerank_score) }}</span>
           </div>
+          <p v-if="src.source" class="trace-source">📄 {{ src.source }}</p>
           <p class="trace-text">{{ src.text || '' }}</p>
         </article>
       </div>

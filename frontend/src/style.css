@@ -386,6 +386,13 @@ button.panel-meta:hover { color: var(--signal); }
   overflow: hidden;
 }
 
+.trace-source {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+
 /* ========================== 文档入库 ========================== */
 
 .drop {
@@ -626,6 +633,30 @@ button.panel-meta:hover { color: var(--signal); }
 .pending::after { content: "…"; animation: dots 1.2s steps(4) infinite; }
 @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
 
+/* 答案下方参考来源 */
+.answer-sources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 14px;
+}
+.answer-sources-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  text-transform: uppercase;
+}
+.answer-source-chip {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  padding: 2px 8px;
+}
+
 /* ============================ 输入区 ============================ */
 
 .composer {
@@ -681,6 +712,57 @@ button.panel-meta:hover { color: var(--signal); }
 }
 .composer-send:hover:not(:disabled) { background: var(--signal); border-color: var(--signal); }
 .composer-send:disabled { opacity: 0.25; cursor: not-allowed; }
+
+/* 部门权限选择 */
+.composer-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.dept {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dept-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.dept-select {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.dept-select:hover:not(:disabled) { border-color: var(--ink); }
+.dept-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.dept-hint {
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+.dept-block {
+  width: 100%;
+  justify-content: space-between;
+  padding: 7px 9px;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  margin-top: 10px;
+}
 
 /* ========================= 正文排版 ========================= */
 

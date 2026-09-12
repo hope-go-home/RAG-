@@ -1,12 +1,27 @@
 <script setup>
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick, watch, computed } from 'vue'
 import { useChatStore } from '../stores/chat'
 import MessageBubble from './MessageBubble.vue'
-import { DOC_TYPES } from '../utils/docTypes'
+import { DOC_TYPES, docColor } from '../utils/docTypes'
+import { DEPARTMENTS, deptHint } from '../utils/departments'
 
 const store = useChatStore()
 const inputText = ref('')
 const streamRef = ref(null)
+
+// 参考来源去重（按文件名），用于答案下方展示引用
+const uniqueSources = computed(() => {
+  const seen = new Set()
+  const out = []
+  for (const s of store.sources) {
+    const key = s.source || s.doc_type
+    if (key && !seen.has(key)) {
+      seen.add(key)
+      out.push(s)
+    }
+  }
+  return out
+})
 
 const EXAMPLES = [
   '公司年假有多少天？',
@@ -91,9 +106,28 @@ function autoResize(e) {
       >
         检索中
       </div>
+
+      <div v-if="!store.streaming && uniqueSources.length" class="answer-sources">
+        <span class="answer-sources-label">参考来源</span>
+        <span
+          v-for="(s, i) in uniqueSources"
+          :key="i"
+          class="answer-source-chip"
+          :style="{ borderLeftColor: docColor(s.doc_type) }"
+        >{{ s.source || s.doc_type }}</span>
+      </div>
     </div>
 
     <div class="composer">
+      <div class="composer-bar">
+        <label class="dept">
+          <span class="dept-label">当前部门</span>
+          <select v-model="store.department" class="dept-select" :disabled="store.streaming">
+            <option v-for="d in DEPARTMENTS" :key="d" :value="d">{{ d }}</option>
+          </select>
+        </label>
+        <span class="dept-hint">{{ deptHint(store.department) }}</span>
+      </div>
       <div class="composer-inner">
         <textarea
           v-model="inputText"
