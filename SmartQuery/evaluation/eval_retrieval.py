@@ -408,7 +408,7 @@ def main() -> None:
         lines.append("| " + " | ".join(cells) + " |")
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    print(f"\n===== 检索链路分阶段对比（均值）=====")
+    print("\n===== 检索链路分阶段对比（均值）=====")
     print(f"{'策略':<16}{'R@1':>8}{'R@5':>8}{'R@10':>8}{'MRR@5':>9}{'nDCG@5':>9}{'Hit@10':>8}")
     for name, key in [("纯稠密基线", "dense_only"), ("+混合检索(RRF)", "hybrid_rrf"),
                       ("+重排序", "hybrid_rerank"), ("+多查询召回", "hybrid_multiquery"),

@@ -1,8 +1,14 @@
-export async function streamChat({ question, sessionId, department }, onEvent) {
+import { useAuthStore } from '../stores/auth'
+
+export async function streamChat({ question, sessionId }, onEvent) {
+  const auth = useAuthStore()
+  const headers = { 'Content-Type': 'application/json' }
+  if (auth.token) headers.Authorization = `Bearer ${auth.token}`
+
   const response = await fetch('/chat/stream', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, session_id: sessionId, department }),
+    headers,
+    body: JSON.stringify({ question, session_id: sessionId }),
   })
 
   if (!response.ok) {

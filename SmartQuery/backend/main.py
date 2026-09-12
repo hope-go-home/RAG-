@@ -2,7 +2,7 @@ import json
 import hashlib
 import time
 import threading
-from fastapi import FastAPI, UploadFile, File, Query, Request, Form
+from fastapi import FastAPI, UploadFile, File, Query, Request, Form, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -11,8 +11,26 @@ import uuid
 
 from SmartQuery.backend.logger import get_logger
 from SmartQuery.backend.health import health_router
-from SmartQuery.backend.database.milvus import connect_milvus, create_collection
-from SmartQuery.backend.database.mysql import init_db, find_file_by_hash, save_file_record
+from SmartQuery.backend.database.milvus import connect_milvus, create_collection, delete_by_source
+from SmartQuery.backend.database.mysql import (
+    init_db,
+    find_file_by_hash,
+    save_file_record,
+    get_user_by_username,
+    write_audit,
+    list_audit,
+    get_document_by_source,
+    get_document_by_id,
+    list_documents,
+    upsert_document,
+    soft_delete_document,
+)
+from SmartQuery.backend.auth import (
+    create_access_token,
+    verify_password,
+    get_current_user,
+    require_admin,
+)
 from SmartQuery.rag.agent import app as rag_agent
 from SmartQuery.rag.ingest import ingest_file, get_partition
 
@@ -60,7 +78,45 @@ session_locks_global = threading.Lock()  # 全局锁（保护 session_locks 字�
 class ChatRequest(BaseModel):
     question: str
     session_id: str | None = None
-    department: str | None = None
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+def _client_ip(request: Request) -> str:
+    return request.client.host if request.client else ""
+
+
+# ------------------ 认证接口 ------------------ #
+
+@app.post("/auth/login")
+def login(request: Request, body: LoginRequest):
+    user = get_user_by_username(body.username)
+    if not user or not user["is_active"] or not verify_password(body.password, user["password_hash"]):
+        write_audit(None, body.username, "login", detail="failed", ip=_client_ip(request))
+        raise HTTPException(status_code=401, detail="用户名或密码错误")
+    token = create_access_token(user)
+    write_audit(user["id"], user["username"], "login", detail="success", ip=_client_ip(request))
+    logger.info("login ok user=%s dept=%s", user["username"], user["department"])
+    return {
+        "token": token,
+        "username": user["username"],
+        "department": user["department"],
+        "role": user["role"],
+    }
+
+
+@app.get("/auth/me")
+def me(user: dict = Depends(get_current_user)):
+    return user
+
+
+@app.get("/auth/audit")
+def audit(limit: int = 100, user: dict = Depends(require_admin)):
+    """审计日志（仅管理员）"""
+    return list_audit(limit)
 
 
 # ------------------ 启动事件 ------------------ #
@@ -76,12 +132,14 @@ def startup():
 # ------------------ 同步 /chat（保留兼容）------------------ #
 
 @app.post("/chat")
-def chat(question: str = Query(...), session_id: str = Query(default=None)):
+def chat(request: Request, question: str = Query(...), session_id: str = Query(default=None),
+         user: dict = Depends(get_current_user)):
     sid = session_id or uuid.uuid4().hex[:8]
-    logger.info("chat start session=%s question=%s", sid, question[:100])
-    initial_state = _build_initial_state(sid, question)
+    logger.info("chat start session=%s user=%s question=%s", sid, user["username"], question[:100])
+    initial_state = _build_initial_state(sid, question, user["department"])
     result = rag_agent.invoke(initial_state)
     _persist_session(sid, question, result)
+    write_audit(user["id"], user["username"], "chat", resource=question[:120], ip=_client_ip(request))
     logger.info("chat done session=%s answer_len=%d", sid, len(result.get("answer", "")))
     return {
         "session_id": sid,
@@ -100,9 +158,10 @@ def _sse(event: str, data: dict) -> str:
 
 
 @app.post("/chat/stream")
-async def chat_stream(request: ChatRequest):
+async def chat_stream(http_request: Request, request: ChatRequest,
+                      user: dict = Depends(get_current_user)):
     sid = request.session_id or uuid.uuid4().hex[:8]
-    initial_state = _build_initial_state(sid, request.question, request.department)
+    initial_state = _build_initial_state(sid, request.question, user["department"])
 
     async def event_generator():
         accumulated = {}  # 累积所有节点的输出，避免后一节点覆盖前一节点的字段
@@ -151,6 +210,8 @@ async def chat_stream(request: ChatRequest):
             yield _sse("answer", {"answer": answer})
 
             _persist_session(sid, request.question, accumulated)
+            write_audit(user["id"], user["username"], "chat",
+                        resource=request.question[:120], ip=_client_ip(http_request))
             yield _sse("done", {"session_id": sid})
 
         except Exception as e:
@@ -183,10 +244,12 @@ def _file_sha256(path: str) -> str:
 
 
 @app.post("/upload")
-async def upload(files: list[UploadFile] = File(...), doc_type: str = Form(default="员工手册"),
-                 department: str = Form(default="公共")):
+async def upload(request: Request, files: list[UploadFile] = File(...),
+                 doc_type: str = Form(default="员工手册"),
+                 department: str = Form(default="公共"),
+                 user: dict = Depends(require_admin)):
     results = []
-    logger.info("upload start files=%d", len(files))
+    logger.info("upload start files=%d user=%s", len(files), user["username"])
     for file in files:
         # 检查文件大小
         content = await file.read()
@@ -204,51 +267,103 @@ async def upload(files: list[UploadFile] = File(...), doc_type: str = Form(defau
             results.append({"file": file.filename, "status": "failed", "message": f"不支持的文件类型 .{ext}"})
             continue
 
+        source = file.filename
         save_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4().hex}.{ext}")
         with open(save_path, "wb") as f:
-            f.write(content)  # 使用已读取的内容
-
+            f.write(content)
         file_hash = _file_sha256(save_path)
-        existing = find_file_by_hash(file_hash)
-        if existing:
-            os.remove(save_path)  # 清理已存在文件的临时副本
-            logger.info("upload duplicate file=%s hash=%s", file.filename, file_hash[:12])
+
+        existing = get_document_by_source(source)
+        if existing and existing["file_hash"] == file_hash:
+            os.remove(save_path)
+            logger.info("upload unchanged file=%s hash=%s", source, file_hash[:12])
             results.append({
-                "file": file.filename,
+                "file": source,
                 "status": "duplicate",
-                "message": f"已入库过（{existing['chunk_count']} 块，{existing['created_at']}），跳过",
+                "message": f"内容未变化（v{existing['version']}，{existing['chunk_count']} 块），跳过",
             })
             continue
 
         try:
-            count = ingest_file(save_path, doc_type=doc_type, department=department)
-            partition = get_partition(save_path)
-            save_file_record(file_hash, file.filename, partition, count)
-            logger.info("upload success file=%s chunks=%d partition=%s", file.filename, count, partition)
-            results.append({"file": file.filename, "status": "success", "message": f"成功入库 {count} 个文档块"})
+            if existing:
+                # 增量更新：先删除旧块，再重新入库
+                delete_by_source(source)
+            count = ingest_file(save_path, doc_type=doc_type, department=department, source=source)
+            rec = upsert_document(source, save_path, file_hash, doc_type, department, count)
+            logger.info("upload %s file=%s chunks=%d version=%d",
+                        "updated" if existing else "success", source, count, rec["version"])
+            results.append({
+                "file": source,
+                "status": "updated" if existing else "success",
+                "message": f"{'更新' if existing else '成功入库'} {count} 块（v{rec['version']}）",
+            })
         except Exception as e:
-            logger.error("upload failed file=%s error=%s", file.filename, e, exc_info=True)
-            results.append({"file": file.filename, "status": "failed", "message": f"入库失败：{e}"})
+            logger.error("upload failed file=%s error=%s", source, e, exc_info=True)
+            results.append({"file": source, "status": "failed", "message": f"入库失败：{e}"})
 
-    success = sum(1 for r in results if r["status"] == "success")
+    success = sum(1 for r in results if r["status"] in ("success", "updated"))
     duplicate = sum(1 for r in results if r["status"] == "duplicate")
     failed = sum(1 for r in results if r["status"] == "failed")
+    write_audit(user["id"], user["username"], "upload",
+                resource=",".join(f.filename for f in files),
+                detail=f"success={success} duplicate={duplicate} failed={failed}",
+                ip=_client_ip(request))
     return {
         "message": f"批量入库完成：成功 {success} 个，重复跳过 {duplicate} 个，失败 {failed} 个",
         "results": results,
     }
 
 
+# ------------------ 文档管理（生命周期）------------------ #
+
+@app.get("/documents")
+def documents(limit: int = 200, user: dict = Depends(get_current_user)):
+    """已入库文档列表"""
+    return list_documents(limit)
+
+
+@app.delete("/documents/{doc_id}")
+def delete_document(doc_id: int, request: Request, user: dict = Depends(require_admin)):
+    """删除文档：软删除登记记录 + 从 Milvus 移除全部块"""
+    info = get_document_by_id(doc_id)
+    if not info or info["status"] != "active":
+        raise HTTPException(status_code=404, detail="文档不存在")
+    delete_by_source(info["source"])
+    soft_delete_document(doc_id)
+    write_audit(user["id"], user["username"], "delete", resource=info["source"], ip=_client_ip(request))
+    logger.info("document deleted source=%s by=%s", info["source"], user["username"])
+    return {"status": "deleted", "source": info["source"]}
+
+
+@app.post("/documents/{doc_id}/reindex")
+def reindex_document(doc_id: int, request: Request, user: dict = Depends(require_admin)):
+    """重建索引：删除旧块后按原始文件重新入库"""
+    info = get_document_by_id(doc_id)
+    if not info or info["status"] != "active":
+        raise HTTPException(status_code=404, detail="文档不存在")
+    if not info["stored_path"] or not os.path.exists(info["stored_path"]):
+        raise HTTPException(status_code=400, detail="原始文件不存在，无法重建索引")
+    delete_by_source(info["source"])
+    count = ingest_file(info["stored_path"], doc_type=info["doc_type"],
+                        department=info["department"], source=info["source"])
+    rec = upsert_document(info["source"], info["stored_path"], info["file_hash"] or "",
+                          info["doc_type"], info["department"], count)
+    write_audit(user["id"], user["username"], "reindex", resource=info["source"], ip=_client_ip(request))
+    logger.info("document reindexed source=%s chunks=%d version=%d",
+                info["source"], count, rec["version"])
+    return {"status": "reindexed", "chunk_count": count, "version": rec["version"]}
+
+
 # ------------------ /history 不变 ------------------ #
 
 @app.get("/history/{session_id}")
-def history(session_id: str):
+def history(session_id: str, user: dict = Depends(get_current_user)):
     from SmartQuery.backend.database.mysql import get_history
     return get_history(session_id)
 
 
 @app.get("/sessions")
-def sessions(limit: int = 50):
+def sessions(limit: int = 50, user: dict = Depends(get_current_user)):
     """历史会话列表（按末次时间倒序）"""
     from SmartQuery.backend.database.mysql import list_sessions
     return list_sessions(limit)

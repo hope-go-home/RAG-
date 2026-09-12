@@ -64,6 +64,24 @@ def drop_collection(collection_name: str | None = None):
         logger.info("dropped collection %s", collection_name)
 
 
+def delete_by_source(source: str, collection_name: str | None = None) -> int:
+    """按来源文件名删除该文档的所有块（用于增量更新 / 删除文档）"""
+    collection = Collection(name=collection_name or COLLECTION_NAME)
+    collection.load()
+    expr = f'source == "{source}"'
+    try:
+        rows = collection.query(expr=expr, output_fields=["id"], limit=16384)
+        count = len(rows)
+    except Exception as e:
+        logger.warning("delete_by_source query failed: %s", e)
+        count = 0
+    if count:
+        collection.delete(expr=expr)
+        collection.flush()
+    logger.info("delete_by_source source=%s deleted=%d", source, count)
+    return count
+
+
 def insert_documents(
     texts: list[str],
     parent_texts: list[str],

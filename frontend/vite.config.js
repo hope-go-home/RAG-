@@ -6,6 +6,10 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      '/auth': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
       '/chat': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -19,6 +23,10 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/sessions': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/documents': {
         target: 'http://localhost:8000',
         changeOrigin: true,
       },

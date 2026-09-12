@@ -1,0 +1,12 @@
+line-length = 120
+target-version = "py311"
+
+[lint]
+select = ["E", "F"]
+ignore = [
+    "E501",  # 行长度交给 formatter
+    "E402",  # 允许延迟导入（项目里有按需 import）
+    "F401",  # 允许未使用导入（部分为兼容/副作用导入）
+    "F841",  # 允许未使用局部变量
+    "F811",  # 允许重定义
+]

@@ -100,3 +100,14 @@ python SmartQuery/evaluation/eval_answer.py     # 回答质量评测
 | 关键短语命中 | 0 / 7 | **7 / 7** |
 
 > 结论：无 OCR 时扫描件完全无法入库；接入 OCR 后可正常识别并检索。
+
+## 八、企业级能力（工程化）
+
+| 能力 | 实现 |
+|------|------|
+| 身份权限 | JWT 认证 + RBAC（仅管理员上传/删除）+ `audit_logs` 审计；**部门由服务端从 Token 解析**，前端不可伪造 |
+| 数据生命周期 | `documents` 登记表 + 增量 upsert（同名文档自动更新、版本递增）+ 软删除 + 按 `source` 从 Milvus 删除 + 重建索引 |
+| 引用溯源 | `source` 字段全链路透传，答案下方与检索面板展示"参考来源" |
+| 提示注入防护 | 检索资料 `<资料>` 分隔 + 指令隔离 |
+| OCR | `qwen-vl-max` 识别扫描件/图片，PDF 无文本层自动回退 |
+| 交付 | 全栈 `docker-compose.full.yml` + GitHub Actions（ruff / compile / 前端构建） |

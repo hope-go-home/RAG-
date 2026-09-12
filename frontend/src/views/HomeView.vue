@@ -4,12 +4,20 @@ import ThinkPanel from '../components/ThinkPanel.vue'
 import StatsPanel from '../components/StatsPanel.vue'
 import TracePanel from '../components/TracePanel.vue'
 import UploadPanel from '../components/UploadPanel.vue'
+import DocumentPanel from '../components/DocumentPanel.vue'
 import HistoryPanel from '../components/HistoryPanel.vue'
 import ChatPanel from '../components/ChatPanel.vue'
 import { useChatStore } from '../stores/chat'
+import { useAuthStore } from '../stores/auth'
 import { DOC_TYPES } from '../utils/docTypes'
 
 const store = useChatStore()
+const auth = useAuthStore()
+
+function handleLogout() {
+  store.reset()
+  auth.logout()
+}
 
 const MIN_W = 280
 const MAX_W = 720
@@ -51,11 +59,14 @@ function startResize(e) {
         <div class="masthead-top">
           <div>
             <div class="masthead-title">知识库</div>
-            <div class="masthead-sub">Enterprise Knowledge Base</div>
+            <div class="masthead-sub">{{ auth.user?.username }} · {{ auth.department }}</div>
           </div>
-          <button class="new-session" title="清空当前对话，开启新会话" @click="store.reset()">
-            ＋ 新会话
-          </button>
+          <div class="masthead-actions">
+            <button class="new-session" title="清空当前对话，开启新会话" @click="store.reset()">
+              ＋ 新会话
+            </button>
+            <button class="new-session" title="退出登录" @click="handleLogout">退出</button>
+          </div>
         </div>
         <div class="legend">
           <span v-for="d in DOC_TYPES" :key="d.name" class="legend-chip">
@@ -68,7 +79,8 @@ function startResize(e) {
         <ThinkPanel />
         <StatsPanel />
         <TracePanel />
-        <UploadPanel />
+        <UploadPanel v-if="auth.isAdmin" />
+        <DocumentPanel v-if="auth.isAdmin" />
         <HistoryPanel />
       </div>
     </aside>

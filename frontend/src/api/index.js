@@ -1,9 +1,37 @@
 import axios from 'axios'
+import { useAuthStore } from '../stores/auth'
 
 const http = axios.create({
   baseURL: '',
   timeout: 300000,
 })
+
+http.interceptors.request.use((config) => {
+  const auth = useAuthStore()
+  if (auth.token) config.headers.Authorization = `Bearer ${auth.token}`
+  return config
+})
+
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      const auth = useAuthStore()
+      auth.logout()
+    }
+    return Promise.reject(error)
+  },
+)
+
+export async function login(username, password) {
+  const { data } = await http.post('/auth/login', { username, password })
+  return data
+}
+
+export async function getMe() {
+  const { data } = await http.get('/auth/me')
+  return data
+}
 
 export async function uploadFiles(files, docType, department) {
   const formData = new FormData()
@@ -25,6 +53,21 @@ export async function getHistory(sessionId) {
 
 export async function getSessions(limit = 50) {
   const { data } = await http.get('/sessions', { params: { limit } })
+  return data
+}
+
+export async function getDocuments(limit = 200) {
+  const { data } = await http.get('/documents', { params: { limit } })
+  return data
+}
+
+export async function deleteDocument(id) {
+  const { data } = await http.delete(`/documents/${id}`)
+  return data
+}
+
+export async function reindexDocument(id) {
+  const { data } = await http.post(`/documents/${id}/reindex`)
   return data
 }
 

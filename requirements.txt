@@ -5,6 +5,10 @@ python-dotenv>=1.0
 pydantic>=2.6
 python-multipart>=0.0.9
 
+# 认证与安全
+PyJWT>=2.8
+passlib[bcrypt]>=1.7
+
 # LangChain / LangGraph
 langchain>=0.2
 langchain-openai>=0.1

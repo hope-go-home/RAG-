@@ -1,11 +1,13 @@
 <script setup>
 import { ref, nextTick, watch, computed } from 'vue'
 import { useChatStore } from '../stores/chat'
+import { useAuthStore } from '../stores/auth'
 import MessageBubble from './MessageBubble.vue'
 import { DOC_TYPES, docColor } from '../utils/docTypes'
-import { DEPARTMENTS, deptHint } from '../utils/departments'
+import { deptHint } from '../utils/departments'
 
 const store = useChatStore()
+const auth = useAuthStore()
 const inputText = ref('')
 const streamRef = ref(null)
 
@@ -120,13 +122,9 @@ function autoResize(e) {
 
     <div class="composer">
       <div class="composer-bar">
-        <label class="dept">
-          <span class="dept-label">当前部门</span>
-          <select v-model="store.department" class="dept-select" :disabled="store.streaming">
-            <option v-for="d in DEPARTMENTS" :key="d" :value="d">{{ d }}</option>
-          </select>
-        </label>
-        <span class="dept-hint">{{ deptHint(store.department) }}</span>
+        <span class="dept-label">当前部门</span>
+        <span class="dept-value">{{ auth.department }}</span>
+        <span class="dept-hint">{{ deptHint(auth.department) }}</span>
       </div>
       <div class="composer-inner">
         <textarea

@@ -334,7 +334,7 @@ def main():
 
     # 打印摘要
     n = len(per_question)
-    print(f"\n===== 回答质量评估结果 =====")
+    print("\n===== 回答质量评估结果 =====")
     print(f"忠实度: {sum(all_faithfulness) / n:.2f}  "
           f"相关性: {sum(all_relevance) / n:.2f}  "
           f"完整性: {sum(all_completeness) / n:.2f}  "

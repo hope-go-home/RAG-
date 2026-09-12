@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { streamChat } from '../api/stream'
 import { getHistory } from '../api/index'
-import { DEFAULT_DEPARTMENT } from '../utils/departments'
 
 const STORAGE_KEY = 'kb_chat_state'
 
@@ -29,7 +28,6 @@ export const useChatStore = defineStore('chat', () => {
   const thinking = ref(saved?.thinking || [])
   const stats = ref(saved?.stats || null)
   const sources = ref(saved?.sources || [])
-  const department = ref(saved?.department || DEFAULT_DEPARTMENT)
   const streaming = ref(false)
   const error = ref(null)
 
@@ -41,7 +39,6 @@ export const useChatStore = defineStore('chat', () => {
         thinking: thinking.value,
         stats: stats.value,
         sources: sources.value,
-        department: department.value,
       }))
     } catch {
       // 存储超限时静默失败，不影响对话
@@ -96,7 +93,7 @@ export const useChatStore = defineStore('chat', () => {
 
     const currentIdx = messages.value.length - 1
 
-    streamChat({ question, sessionId: sessionId.value, department: department.value }, (event) => {
+    streamChat({ question, sessionId: sessionId.value }, (event) => {
       switch (event.type) {
         case 'thinking':
           thinking.value.push({ node: event.node, info: event.info })
@@ -138,7 +135,6 @@ export const useChatStore = defineStore('chat', () => {
     thinking,
     stats,
     sources,
-    department,
     streaming,
     error,
     send,
