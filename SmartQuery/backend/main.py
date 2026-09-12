@@ -205,7 +205,7 @@ def chat(request: Request, question: str = Query(...), session_id: str = Query(d
     logger.info("chat start session=%s user=%s question=%s", sid, user["username"], question[:100])
     initial_state = _build_initial_state(sid, question, user["department"])
     result = rag_agent.invoke(initial_state)
-    _persist_session(sid, question, result)
+    _persist_session(sid, question, result, user["id"])
     write_audit(user["id"], user["username"], "chat", resource=question[:120], ip=_client_ip(request))
     logger.info("chat done session=%s answer_len=%d", sid, len(result.get("answer", "")))
     return {
@@ -276,7 +276,7 @@ async def chat_stream(http_request: Request, request: ChatRequest,
                 answer = "抱歉，无法生成回答。请尝试换一种方式提问。"
             yield _sse("answer", {"answer": answer})
 
-            _persist_session(sid, request.question, accumulated)
+            _persist_session(sid, request.question, accumulated, user["id"])
             write_audit(user["id"], user["username"], "chat",
                         resource=request.question[:120], ip=_client_ip(http_request))
             yield _sse("done", {"session_id": sid})
@@ -426,14 +426,27 @@ def reindex_document(doc_id: int, request: Request, user: dict = Depends(require
 @app.get("/history/{session_id}")
 def history(session_id: str, user: dict = Depends(get_current_user)):
     from SmartQuery.backend.database.mysql import get_history
-    return get_history(session_id)
+    return get_history(session_id, user["id"])
 
 
 @app.get("/sessions")
 def sessions(limit: int = 50, user: dict = Depends(get_current_user)):
-    """历史会话列表（按末次时间倒序）"""
+    """历史会话列表（按末次时间倒序，仅当前用户）"""
     from SmartQuery.backend.database.mysql import list_sessions
-    return list_sessions(limit)
+    return list_sessions(user["id"], limit)
+
+
+@app.delete("/sessions/{session_id}")
+def delete_session(session_id: str, request: Request, user: dict = Depends(get_current_user)):
+    """删除当前用户的某个历史会话"""
+    from SmartQuery.backend.database.mysql import delete_session as _del
+    n = _del(session_id, user["id"])
+    if n == 0:
+        raise HTTPException(status_code=404, detail="会话不存在或无权删除")
+    write_audit(user["id"], user["username"], "delete_session",
+                resource=session_id, detail=f"records={n}", ip=_client_ip(request))
+    logger.info("session deleted sid=%s records=%d by=%s", session_id, n, user["username"])
+    return {"status": "deleted", "session_id": session_id, "records": n}
 
 
 # ------------------ 内部辅助函数 ------------------ #
@@ -456,7 +469,7 @@ def _build_initial_state(sid: str, question: str, department: str | None = None)
     return state
 
 
-def _persist_session(sid: str, question: str, result: dict):
+def _persist_session(sid: str, question: str, result: dict, user_id: int | None = None):
     """持久化 session 上下文 + 聊天记录"""
     answer = result.get("answer", "")
 
@@ -480,7 +493,7 @@ def _persist_session(sid: str, question: str, result: dict):
         }
     # 存 MySQL
     from SmartQuery.backend.database.mysql import save_record
-    save_record(sid, question, answer)
+    save_record(sid, question, answer, user_id)
 
 
 if __name__ == "__main__":

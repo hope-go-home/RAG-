@@ -71,6 +71,11 @@ export async function getSessions(limit = 50) {
   return data
 }
 
+export async function deleteSession(sessionId) {
+  const { data } = await http.delete(`/sessions/${sessionId}`)
+  return data
+}
+
 export async function getDocuments(limit = 200) {
   const { data } = await http.get('/documents', { params: { limit } })
   return data

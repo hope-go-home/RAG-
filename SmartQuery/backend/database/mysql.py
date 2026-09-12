@@ -22,54 +22,73 @@ class ChatRecord(Base):
 
     id = Column(Integer,primary_key=True,autoincrement=True)
     session_id = Column(String(64),index=True,nullable=False)
+    user_id = Column(Integer,index=True,nullable=True)   # 归属用户（历史会话按用户隔离）
     question = Column(Text,nullable=False)
     answer = Column(Text,nullable=False)
     created_at = Column(DateTime,default=datetime.utcnow)
 
+
+def _ensure_columns():
+    """轻量迁移：为已存在的表补充新增列（create_all 不会修改已存在的表）"""
+    from sqlalchemy import inspect, text
+    insp = inspect(engine)
+    if "chat_records" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("chat_records")}
+        if "user_id" not in cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE chat_records ADD COLUMN user_id INT NULL"))
+                conn.execute(text("CREATE INDEX ix_chat_records_user_id ON chat_records (user_id)"))
+            logger.info("migrated: chat_records.user_id added")
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
+    _ensure_columns()
     logger.info("mysql tables ready")
     seed_default_admin()
 
-def save_record(session_id: str, question: str, answer: str):
-    db = SessionLocal()
-    record = ChatRecord(session_id=session_id, question=question, answer=answer)
-    db.add(record)
-    db.commit()
-    db.close()
 
-
-def get_history(session_id: str) -> list[dict]:
-    db = SessionLocal() #调用之前创建的会话工厂 SessionLocal()，生成一个新的数据库会话对象，赋值给变量 db。该会话用于执行数据库操作（查询、提交、关闭等）。
-    records = (
-        db.query(ChatRecord) #从数据库的 ChatRecord 表（对应 caht_records 表）发起查询
-        .filter(ChatRecord.session_id == session_id)
-        .order_by(ChatRecord.created_at)  #按 created_at 列进行升序排序（默认升序）
-        .all()
-    )
-    db.close()
-    return [
-        {"question": r.question, "answer": r.answer, "created_at": str(r.created_at)}
-        for r in records
-    ]
-
-
-def list_sessions(limit: int = 50) -> list[dict]:
-    """按会话聚合，返回每个会话的首问、末次时间、问答条数（用于历史会话列表）"""
+def save_record(session_id: str, question: str, answer: str, user_id: int | None = None):
     db = SessionLocal()
     try:
-        rows = (
-            db.query(
-                ChatRecord.session_id,
-                func.min(ChatRecord.id).label("first_id"),
-                func.max(ChatRecord.created_at).label("last_time"),
-                func.count(ChatRecord.id).label("count"),
-            )
-            .group_by(ChatRecord.session_id)
-            .order_by(func.max(ChatRecord.created_at).desc())
-            .limit(limit)
-            .all()
+        db.add(ChatRecord(session_id=session_id, question=question,
+                          answer=answer, user_id=user_id))
+        db.commit()
+    finally:
+        db.close()
+
+
+def get_history(session_id: str, user_id: int | None = None) -> list[dict]:
+    """取某会话的问答记录；user_id 不为空时只取该用户的"""
+    db = SessionLocal()
+    try:
+        q = db.query(ChatRecord).filter(ChatRecord.session_id == session_id)
+        if user_id is not None:
+            q = q.filter(ChatRecord.user_id == user_id)
+        records = q.order_by(ChatRecord.created_at).all()
+        return [
+            {"question": r.question, "answer": r.answer, "created_at": str(r.created_at)}
+            for r in records
+        ]
+    finally:
+        db.close()
+
+
+def list_sessions(user_id: int | None = None, limit: int = 50) -> list[dict]:
+    """按会话聚合，返回首问、末次时间、问答条数；按用户隔离"""
+    db = SessionLocal()
+    try:
+        q = db.query(
+            ChatRecord.session_id,
+            func.min(ChatRecord.id).label("first_id"),
+            func.max(ChatRecord.created_at).label("last_time"),
+            func.count(ChatRecord.id).label("count"),
         )
+        if user_id is not None:
+            q = q.filter(ChatRecord.user_id == user_id)
+        rows = (q.group_by(ChatRecord.session_id)
+                 .order_by(func.max(ChatRecord.created_at).desc())
+                 .limit(limit).all())
         result = []
         for r in rows:
             first_question = (
@@ -84,6 +103,20 @@ def list_sessions(limit: int = 50) -> list[dict]:
                 "count": r.count,
             })
         return result
+    finally:
+        db.close()
+
+
+def delete_session(session_id: str, user_id: int | None = None) -> int:
+    """删除会话的全部问答记录，返回删除条数；user_id 不为空时校验归属"""
+    db = SessionLocal()
+    try:
+        q = db.query(ChatRecord).filter(ChatRecord.session_id == session_id)
+        if user_id is not None:
+            q = q.filter(ChatRecord.user_id == user_id)
+        n = q.delete(synchronize_session=False)
+        db.commit()
+        return n
     finally:
         db.close()
 
