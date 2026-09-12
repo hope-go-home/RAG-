@@ -5,6 +5,7 @@ import StatsPanel from '../components/StatsPanel.vue'
 import TracePanel from '../components/TracePanel.vue'
 import UploadPanel from '../components/UploadPanel.vue'
 import DocumentPanel from '../components/DocumentPanel.vue'
+import UserPanel from '../components/UserPanel.vue'
 import HistoryPanel from '../components/HistoryPanel.vue'
 import ChatPanel from '../components/ChatPanel.vue'
 import { useChatStore } from '../stores/chat'
@@ -81,6 +82,7 @@ function startResize(e) {
         <TracePanel />
         <UploadPanel v-if="auth.isAdmin" />
         <DocumentPanel v-if="auth.isAdmin" />
+        <UserPanel v-if="auth.isAdmin" />
         <HistoryPanel />
       </div>
     </aside>

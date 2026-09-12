@@ -17,6 +17,8 @@ from SmartQuery.backend.database.mysql import (
     find_file_by_hash,
     save_file_record,
     get_user_by_username,
+    create_user,
+    list_users,
     write_audit,
     list_audit,
     get_document_by_source,
@@ -25,6 +27,7 @@ from SmartQuery.backend.database.mysql import (
     upsert_document,
     soft_delete_document,
 )
+from SmartQuery.backend.config import ALLOW_REGISTRATION
 from SmartQuery.backend.auth import (
     create_access_token,
     verify_password,
@@ -85,6 +88,22 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    department: str = "公共"
+
+
+class AdminUserRequest(BaseModel):
+    username: str
+    password: str
+    department: str = "公共"
+    role: str = "user"
+
+
+ALLOWED_DEPARTMENTS = {"HR", "财务", "IT", "技术", "公共", "行政"}
+
+
 def _client_ip(request: Request) -> str:
     return request.client.host if request.client else ""
 
@@ -117,6 +136,54 @@ def me(user: dict = Depends(get_current_user)):
 def audit(limit: int = 100, user: dict = Depends(require_admin)):
     """审计日志（仅管理员）"""
     return list_audit(limit)
+
+
+@app.post("/auth/register")
+def register(request: Request, body: RegisterRequest):
+    """自助注册：新用户 role=user，部门限制在白名单内"""
+    if not ALLOW_REGISTRATION:
+        raise HTTPException(status_code=403, detail="系统未开放注册，请联系管理员")
+    username = body.username.strip()
+    if not (3 <= len(username) <= 32):
+        raise HTTPException(status_code=400, detail="用户名长度需为 3-32 位")
+    if len(body.password) < 6:
+        raise HTTPException(status_code=400, detail="密码至少 6 位")
+    if get_user_by_username(username):
+        raise HTTPException(status_code=409, detail="用户名已存在")
+    dept = body.department if body.department in ALLOWED_DEPARTMENTS else "公共"
+    user_id = create_user(username, body.password, dept, "user")
+    write_audit(user_id, username, "register", resource=dept, ip=_client_ip(request))
+    logger.info("register ok user=%s dept=%s", username, dept)
+    token = create_access_token({"id": user_id, "username": username,
+                                 "department": dept, "role": "user"})
+    return {"token": token, "username": username, "department": dept, "role": "user"}
+
+
+@app.get("/auth/users")
+def users(limit: int = 200, user: dict = Depends(require_admin)):
+    """用户列表（仅管理员，不含密码）"""
+    return list_users(limit)
+
+
+@app.post("/auth/users")
+def create_user_admin(request: Request, body: AdminUserRequest,
+                      user: dict = Depends(require_admin)):
+    """管理员创建用户（可指定部门与角色）"""
+    username = body.username.strip()
+    if not (3 <= len(username) <= 32):
+        raise HTTPException(status_code=400, detail="用户名长度需为 3-32 位")
+    if len(body.password) < 6:
+        raise HTTPException(status_code=400, detail="密码至少 6 位")
+    if get_user_by_username(username):
+        raise HTTPException(status_code=409, detail="用户名已存在")
+    if body.role not in ("admin", "user"):
+        raise HTTPException(status_code=400, detail="角色只能是 admin / user")
+    dept = body.department if body.department in ALLOWED_DEPARTMENTS else "公共"
+    uid = create_user(username, body.password, dept, body.role)
+    write_audit(user["id"], user["username"], "create_user",
+                resource=username, detail=f"dept={dept} role={body.role}",
+                ip=_client_ip(request))
+    return {"id": uid, "username": username, "department": dept, "role": body.role}
 
 
 # ------------------ 启动事件 ------------------ #

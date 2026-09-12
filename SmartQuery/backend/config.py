@@ -21,6 +21,9 @@ DEFAULT_ADMIN_USER = os.getenv("DEFAULT_ADMIN_USER", "admin")
 DEFAULT_ADMIN_PASSWORD = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin123")
 DEFAULT_ADMIN_DEPARTMENT = os.getenv("DEFAULT_ADMIN_DEPARTMENT", "公共")
 
+# 是否开放自助注册（生产建议 false，改为管理员创建用户）
+ALLOW_REGISTRATION = os.getenv("ALLOW_REGISTRATION", "true").lower() in ("1", "true", "yes")
+
 MYSQL_HOST = os.getenv("MYSQL_HOST")
 MYSQL_PORT = int(os.getenv("MYSQL_PORT"))
 MYSQL_USER = os.getenv("MYSQL_USER")

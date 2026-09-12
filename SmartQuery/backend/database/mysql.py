@@ -198,6 +198,19 @@ def get_user_by_username(username: str) -> dict | None:
         db.close()
 
 
+def list_users(limit: int = 200) -> list[dict]:
+    """用户列表（不含密码哈希）"""
+    db = SessionLocal()
+    try:
+        rows = db.query(User).order_by(User.id).limit(limit).all()
+        return [{
+            "id": u.id, "username": u.username, "department": u.department,
+            "role": u.role, "is_active": u.is_active, "created_at": str(u.created_at),
+        } for u in rows]
+    finally:
+        db.close()
+
+
 def write_audit(user_id: int | None, username: str | None, action: str,
                 resource: str = "", detail: str = "", ip: str = ""):
     db = SessionLocal()

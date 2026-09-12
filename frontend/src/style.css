@@ -880,6 +880,33 @@ button.panel-meta:hover { color: var(--signal); }
 
 .login-hint { font-size: 11px; color: var(--faint); text-align: center; margin-top: 14px; }
 
+.login-switch { display: flex; gap: 6px; margin-bottom: 16px; }
+.login-switch button {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--card-sunk);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 7px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.login-switch button.active { color: var(--card); background: var(--ink); border-color: var(--ink); }
+
+.login-select {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--card-sunk);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 9px 11px;
+  outline: none;
+}
+
 /* 顶栏用户操作 */
 .masthead-actions { display: flex; gap: 6px; }
 .dept-value {
@@ -936,6 +963,42 @@ button.panel-meta:hover { color: var(--signal); }
 .doc-actions button:hover { border-color: var(--ink); }
 .doc-actions .doc-del:hover { color: var(--signal); border-color: var(--signal); }
 .doc-msg { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+
+/* 用户管理 */
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 180px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+.user-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 5px 9px;
+  font-size: 12.5px;
+}
+.user-name { color: var(--ink); }
+.user-meta { font-size: 11px; color: var(--faint); }
+
+.user-form { display: flex; flex-direction: column; gap: 6px; }
+.user-form input, .user-form select {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  color: var(--ink);
+  background: var(--card-sunk);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 6px 9px;
+  outline: none;
+  width: 100%;
+}
+.user-form-row { display: flex; gap: 6px; }
 
 /* ============================ 响应式 ============================ */
 

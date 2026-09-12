@@ -28,6 +28,21 @@ export async function login(username, password) {
   return data
 }
 
+export async function register(username, password, department) {
+  const { data } = await http.post('/auth/register', { username, password, department })
+  return data
+}
+
+export async function getUsers() {
+  const { data } = await http.get('/auth/users')
+  return data
+}
+
+export async function createUser(payload) {
+  const { data } = await http.post('/auth/users', payload)
+  return data
+}
+
 export async function getMe() {
   const { data } = await http.get('/auth/me')
   return data
