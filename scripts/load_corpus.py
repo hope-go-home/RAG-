@@ -26,6 +26,7 @@ from SmartQuery.backend.database.milvus import (
     connect_milvus,
     create_collection,
     drop_collection,
+    delete_by_sources,
     insert_documents,
 )
 from SmartQuery.rag.ingest import (
@@ -69,6 +70,12 @@ def main() -> None:
 
     files = list(iter_corpus(args.doc_type))
     print(f"待入库文件数：{len(files)}")
+
+    # 幂等清理：先按 source 删除同名旧块，再重新插入。
+    # 这样重复运行本脚本不会产生重复块（不加 --reset 也安全）。
+    removed = delete_by_sources([f.name for f, _, _ in files])
+    if removed:
+        print(f"幂等清理：删除同源旧块 {removed} 个")
 
     # 1) 解析 + 切分，收集所有子块
     jobs = []

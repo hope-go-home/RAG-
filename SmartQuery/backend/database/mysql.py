@@ -154,11 +154,17 @@ def find_file_by_hash(file_hash: str) -> dict | None:
 
 
 def save_file_record(file_hash: str, filename: str, partition: str, chunk_count: int):
-    """记录一条已入库文件"""
+    """记录一条已入库文件（按内容哈希幂等：已存在则更新，避免唯一键冲突）"""
     db = SessionLocal()
     try:
-        db.add(UploadedFile(file_hash=file_hash, filename=filename,
-                            partition=partition, chunk_count=chunk_count))
+        row = db.query(UploadedFile).filter(UploadedFile.file_hash == file_hash).first()
+        if row is None:
+            db.add(UploadedFile(file_hash=file_hash, filename=filename,
+                                partition=partition, chunk_count=chunk_count))
+        else:
+            row.filename = filename
+            row.partition = partition
+            row.chunk_count = chunk_count
         db.commit()
     finally:
         db.close()

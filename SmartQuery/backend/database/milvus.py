@@ -82,6 +82,32 @@ def delete_by_source(source: str, collection_name: str | None = None) -> int:
     return count
 
 
+def delete_by_sources(sources: list[str], collection_name: str | None = None) -> int:
+    """按来源文件名批量删除（一次 delete 完成，避免逐文件 flush）。
+
+    用于批量入库前按 source 幂等清理：先删同源旧块，再重新插入，
+    从而保证同一份语料重复入库时不会产生重复块。
+    """
+    sources = [s for s in sources if s]
+    if not sources:
+        return 0
+    collection = Collection(name=collection_name or COLLECTION_NAME)
+    collection.load()
+    escaped = ", ".join('"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"' for s in sources)
+    expr = f"source in [{escaped}]"
+    try:
+        rows = collection.query(expr=expr, output_fields=["id"], limit=16384)
+        count = len(rows)
+    except Exception as e:
+        logger.warning("delete_by_sources query failed: %s", e)
+        count = 0
+    if count:
+        collection.delete(expr=expr)
+        collection.flush()
+    logger.info("delete_by_sources sources=%d deleted=%d", len(sources), count)
+    return count
+
+
 def insert_documents(
     texts: list[str],
     parent_texts: list[str],

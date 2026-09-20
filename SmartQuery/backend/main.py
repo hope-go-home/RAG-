@@ -351,6 +351,19 @@ async def upload(request: Request, files: list[UploadFile] = File(...),
             })
             continue
 
+        # 内容级去重：同一份内容换了文件名也视为重复，不再入库
+        hash_hit = find_file_by_hash(file_hash)
+        if hash_hit and hash_hit["filename"] != source:
+            os.remove(save_path)
+            logger.info("upload duplicate content file=%s same_as=%s", source, hash_hit["filename"])
+            results.append({
+                "file": source,
+                "status": "duplicate",
+                "message": f"内容与已入库文档「{hash_hit['filename']}」相同"
+                           f"（{hash_hit['chunk_count']} 块），跳过",
+            })
+            continue
+
         try:
             used_ocr = is_scanned(save_path)
             if existing:
@@ -358,6 +371,7 @@ async def upload(request: Request, files: list[UploadFile] = File(...),
                 delete_by_source(source)
             count = ingest_file(save_path, doc_type=doc_type, department=department, source=source)
             rec = upsert_document(source, save_path, file_hash, doc_type, department, count)
+            save_file_record(file_hash, source, get_partition(save_path), count)
             logger.info("upload %s file=%s chunks=%d version=%d ocr=%s",
                         "updated" if existing else "success", source, count, rec["version"], used_ocr)
             results.append({
