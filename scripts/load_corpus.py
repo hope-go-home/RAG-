@@ -14,6 +14,7 @@
 """
 
 import argparse
+import hashlib
 import sys
 import time
 from pathlib import Path
@@ -29,6 +30,11 @@ from SmartQuery.backend.database.milvus import (
     delete_by_sources,
     insert_documents,
 )
+from SmartQuery.backend.database.mysql import (
+    init_db,
+    save_file_record,
+    upsert_document,
+)
 from SmartQuery.rag.ingest import (
     clean_documents,
     get_partition,
@@ -40,6 +46,15 @@ from corpus_meta import department_of
 
 CORPUS_DIR = Path(__file__).resolve().parents[1] / "data" / "corpus"
 SUPPORTED_EXTS = {".md", ".txt", ".pdf", ".docx", ".xlsx", ".png", ".jpg", ".jpeg"}
+
+
+def file_sha256(path: str) -> str:
+    """文件内容 SHA-256，与上传接口的去重口径一致"""
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def iter_corpus(doc_type: str | None = None):
@@ -64,6 +79,7 @@ def main() -> None:
     args = parser.parse_args()
 
     connect_milvus()
+    init_db()  # 确保 documents / uploaded_files 登记表存在（供前端 /upload 去重）
     if args.reset:
         drop_collection()
     create_collection()
@@ -111,6 +127,10 @@ def main() -> None:
             sparse_vectors[offset:offset + n],
             part, doc_type=doc_type, department=dept, source=file.name, flush=False,
         )
+        # 同步登记到 MySQL，使前端 /upload 的重复检查能识别批量入库的语料
+        file_hash = file_sha256(str(file))
+        upsert_document(file.name, str(file), file_hash, doc_type, dept, n)
+        save_file_record(file_hash, file.name, part, n)
         offset += n
         print(f"  {doc_type}/{dept}/{file.name} -> {n} 块")
 
