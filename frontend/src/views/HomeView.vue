@@ -3,17 +3,21 @@ import { ref } from 'vue'
 import ThinkPanel from '../components/ThinkPanel.vue'
 import StatsPanel from '../components/StatsPanel.vue'
 import TracePanel from '../components/TracePanel.vue'
+import TypeFilter from '../components/TypeFilter.vue'
 import UploadPanel from '../components/UploadPanel.vue'
 import DocumentPanel from '../components/DocumentPanel.vue'
 import UserPanel from '../components/UserPanel.vue'
 import HistoryPanel from '../components/HistoryPanel.vue'
 import ChatPanel from '../components/ChatPanel.vue'
+import EvaluationView from '../components/EvaluationView.vue'
+import LanguageToggle from '../components/LanguageToggle.vue'
 import { useChatStore } from '../stores/chat'
 import { useAuthStore } from '../stores/auth'
-import { DOC_TYPES } from '../utils/docTypes'
+import { t } from '../i18n'
 
 const store = useChatStore()
 const auth = useAuthStore()
+const showEval = ref(false)
 
 function handleLogout() {
   store.reset()
@@ -58,28 +62,30 @@ function startResize(e) {
     <aside class="sidebar" :style="{ '--sidebar-w': sidebarWidth + 'px' }">
       <header class="masthead">
         <div class="masthead-top">
-          <div>
-            <div class="masthead-title">知识库</div>
-            <div class="masthead-sub">{{ auth.user?.username }} · {{ auth.department }}</div>
+          <div class="masthead-brand">
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 32 32" width="26" height="26"><path d="M7 10l4 13 3-9 3 9 4-13" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <div class="masthead-title">{{ t('app.title') }}</div>
+              <div class="masthead-sub">{{ auth.user?.username }} · {{ auth.user?.role }}</div>
+            </div>
           </div>
           <div class="masthead-actions">
-            <button class="new-session" title="清空当前对话，开启新会话" @click="store.reset()">
-              ＋ 新会话
-            </button>
-            <button class="new-session" title="退出登录" @click="handleLogout">退出</button>
+            <button class="icon-btn" :title="t('header.newSession')" @click="store.reset()">＋</button>
+            <button class="icon-btn" :title="t('header.logout')" @click="handleLogout">⎋</button>
           </div>
         </div>
-        <div class="legend">
-          <span v-for="d in DOC_TYPES" :key="d.name" class="legend-chip">
-            <span class="legend-dot" :style="{ background: d.color }" />
-            {{ d.short }}
-          </span>
+        <div class="masthead-bar">
+          <LanguageToggle />
+          <button class="link-btn" @click="showEval = true">{{ t('evaluation.open') }}</button>
         </div>
       </header>
       <div class="sidebar-scroll">
         <ThinkPanel />
         <StatsPanel />
         <TracePanel />
+        <TypeFilter />
         <UploadPanel v-if="auth.isAdmin" />
         <DocumentPanel v-if="auth.isAdmin" />
         <UserPanel v-if="auth.isAdmin" />
@@ -87,10 +93,12 @@ function startResize(e) {
       </div>
     </aside>
 
-    <div class="resizer" title="拖动调节宽度" @mousedown="startResize" />
+    <div class="resizer" :title="t('header.language')" @mousedown="startResize" />
 
     <main class="main-area">
       <ChatPanel />
     </main>
+
+    <EvaluationView :open="showEval" @close="showEval = false" />
   </div>
 </template>

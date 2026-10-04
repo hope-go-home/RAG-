@@ -28,6 +28,7 @@ export const useChatStore = defineStore('chat', () => {
   const thinking = ref(saved?.thinking || [])
   const stats = ref(saved?.stats || null)
   const sources = ref(saved?.sources || [])
+  const docType = ref(saved?.docType || '')
   const streaming = ref(false)
   const error = ref(null)
 
@@ -39,6 +40,7 @@ export const useChatStore = defineStore('chat', () => {
         thinking: thinking.value,
         stats: stats.value,
         sources: sources.value,
+        docType: docType.value,
       }))
     } catch {
       // 存储超限时静默失败，不影响对话
@@ -51,6 +53,7 @@ export const useChatStore = defineStore('chat', () => {
     thinking.value = []
     stats.value = null
     sources.value = []
+    docType.value = ''
     streaming.value = false
     error.value = null
     try {
@@ -93,7 +96,7 @@ export const useChatStore = defineStore('chat', () => {
 
     const currentIdx = messages.value.length - 1
 
-    streamChat({ question, sessionId: sessionId.value }, (event) => {
+    streamChat({ question, sessionId: sessionId.value, docType: docType.value }, (event) => {
       switch (event.type) {
         case 'thinking':
           thinking.value.push({ node: event.node, info: event.info })
@@ -135,6 +138,7 @@ export const useChatStore = defineStore('chat', () => {
     thinking,
     stats,
     sources,
+    docType,
     streaming,
     error,
     send,

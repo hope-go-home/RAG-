@@ -5,7 +5,7 @@ from pymilvus import connections, Collection, CollectionSchema, FieldSchema, Dat
 logger = get_logger(__name__)
 
 COLLECTION_NAME = "enterprise_kb_docs"
-DIMENSION = 2048
+DIMENSION = 2048          # qwen 稠密
 PARTITIONS = ["pdf", "docx", "txt", "md", "xlsx"]
 
 
@@ -35,8 +35,9 @@ def create_collection(collection_name: str | None = None):
         FieldSchema(name="dense_vector", dtype=DataType.FLOAT_VECTOR, dim=DIMENSION),
         FieldSchema(name="sparse_vector", dtype=DataType.SPARSE_FLOAT_VECTOR),
         FieldSchema(name="doc_type", dtype=DataType.VARCHAR, max_length=64),
-        FieldSchema(name="department", dtype=DataType.VARCHAR, max_length=64),
         FieldSchema(name="source", dtype=DataType.VARCHAR, max_length=256),
+        FieldSchema(name="title", dtype=DataType.VARCHAR, max_length=512),
+        FieldSchema(name="url", dtype=DataType.VARCHAR, max_length=512),
     ]
 
     schema = CollectionSchema(fields, description="Enterprise KB document embeddings")
@@ -49,9 +50,8 @@ def create_collection(collection_name: str | None = None):
     collection.create_index(field_name="dense_vector", index_params=index_params)
     collection.create_index(field_name="sparse_vector",
                             index_params={"index_type": "SPARSE_INVERTED_INDEX", "metric_type": "IP"})
-    # 标量字段倒排索引：加速按文档类型 / 部门过滤（否则为暴力扫描）
+    # 标量字段倒排索引：加速按文档类型过滤（否则为暴力扫描）
     collection.create_index(field_name="doc_type", index_params={"index_type": "INVERTED"})
-    collection.create_index(field_name="department", index_params={"index_type": "INVERTED"})
     collection.load()
     logger.info("created collection %s", collection_name)
 
@@ -114,15 +114,19 @@ def insert_documents(
     dense_vectors: list[list[float]],
     sparse_vectors: list[dict[int, float]],
     partition_name: str = "txt",
-    doc_type: str = "员工手册",
-    department: str = "公共",
+    doc_type: str = "",
     source: str = "",
+    titles: list[str] | None = None,
+    urls: list[str] | None = None,
     collection_name: str | None = None,
     flush: bool = True,
 ):
+    n = len(texts)
+    titles = titles if titles is not None else [""] * n
+    urls = urls if urls is not None else [""] * n
     collection = Collection(name=collection_name or COLLECTION_NAME)
     entities = [texts, parent_texts, dense_vectors, sparse_vectors,
-                [doc_type] * len(texts), [department] * len(texts), [source] * len(texts)]
+                [doc_type] * n, [source] * n, titles, urls]
     collection.insert(entities, partition_name=partition_name)
     # 批量入库时逐文件 flush 极慢，改为全部插入后统一 flush 一次
     if flush:
@@ -135,7 +139,7 @@ def search_dense(
     partition_name: str | None = None,
     expr: str | None = None,
     collection_name: str | None = None,
-) -> list[tuple[str, str, float, str, str]]:
+) -> list[tuple[str, str, float, str, str, str, str]]:
     collection = Collection(name=collection_name or COLLECTION_NAME)
     collection.load()
 
@@ -144,7 +148,7 @@ def search_dense(
         "anns_field": "dense_vector",
         "param": {"metric_type": "IP", "params": {"nprobe": 10}},
         "limit": top_k,
-        "output_fields": ["text", "parent_text", "doc_type", "source"],
+        "output_fields": ["text", "parent_text", "doc_type", "source", "title", "url"],
     }
     if partition_name:
         kwargs["partition_names"] = [partition_name]
@@ -153,7 +157,8 @@ def search_dense(
 
     results = collection.search(**kwargs)
     return [(hit.entity.get("text"), hit.entity.get("parent_text"), hit.score,
-             hit.entity.get("doc_type"), hit.entity.get("source")) for hit in results[0]]
+             hit.entity.get("doc_type"), hit.entity.get("source"),
+             hit.entity.get("title"), hit.entity.get("url")) for hit in results[0]]
 
 
 def search_sparse(
@@ -162,7 +167,7 @@ def search_sparse(
     partition_name: str | None = None,
     expr: str | None = None,
     collection_name: str | None = None,
-) -> list[tuple[str, str, float, str, str]]:
+) -> list[tuple[str, str, float, str, str, str, str]]:
     collection = Collection(name=collection_name or COLLECTION_NAME)
     collection.load()
 
@@ -171,7 +176,7 @@ def search_sparse(
         "anns_field": "sparse_vector",
         "param": {"metric_type": "IP"},
         "limit": top_k,
-        "output_fields": ["text", "parent_text", "doc_type", "source"],
+        "output_fields": ["text", "parent_text", "doc_type", "source", "title", "url"],
     }
     if partition_name:
         kwargs["partition_names"] = [partition_name]
@@ -180,4 +185,5 @@ def search_sparse(
 
     results = collection.search(**kwargs)
     return [(hit.entity.get("text"), hit.entity.get("parent_text"), hit.score,
-             hit.entity.get("doc_type"), hit.entity.get("source")) for hit in results[0]]
+             hit.entity.get("doc_type"), hit.entity.get("source"),
+             hit.entity.get("title"), hit.entity.get("url")) for hit in results[0]]

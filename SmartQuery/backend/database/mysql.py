@@ -173,13 +173,12 @@ def save_file_record(file_hash: str, filename: str, partition: str, chunk_count:
 # ---------------- 用户与审计（身份权限）---------------- #
 
 class User(Base):
-    """系统用户：部门与角色绑定在服务端，前端不可伪造"""
+    """系统用户：角色绑定在服务端，前端不可伪造"""
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(64), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
-    department = Column(String(64), nullable=False, default="公共")
     role = Column(String(16), nullable=False, default="user")  # admin / user
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -207,14 +206,12 @@ def count_users() -> int:
         db.close()
 
 
-def create_user(username: str, password: str, department: str = "公共",
-                role: str = "user") -> int:
+def create_user(username: str, password: str, role: str = "user") -> int:
     """创建用户，返回用户 id"""
     from SmartQuery.backend.auth import hash_password
     db = SessionLocal()
     try:
-        user = User(username=username, password_hash=hash_password(password),
-                    department=department, role=role)
+        user = User(username=username, password_hash=hash_password(password), role=role)
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -231,7 +228,7 @@ def get_user_by_username(username: str) -> dict | None:
             return None
         return {
             "id": u.id, "username": u.username, "password_hash": u.password_hash,
-            "department": u.department, "role": u.role, "is_active": u.is_active,
+            "role": u.role, "is_active": u.is_active,
         }
     finally:
         db.close()
@@ -243,7 +240,7 @@ def list_users(limit: int = 200) -> list[dict]:
     try:
         rows = db.query(User).order_by(User.id).limit(limit).all()
         return [{
-            "id": u.id, "username": u.username, "department": u.department,
+            "id": u.id, "username": u.username,
             "role": u.role, "is_active": u.is_active, "created_at": str(u.created_at),
         } for u in rows]
     finally:
@@ -281,13 +278,9 @@ def seed_default_admin():
     try:
         if count_users() > 0:
             return
-        from SmartQuery.backend.config import (
-            DEFAULT_ADMIN_USER, DEFAULT_ADMIN_PASSWORD, DEFAULT_ADMIN_DEPARTMENT,
-        )
-        create_user(DEFAULT_ADMIN_USER, DEFAULT_ADMIN_PASSWORD,
-                    DEFAULT_ADMIN_DEPARTMENT, "admin")
-        logger.info("seeded default admin user=%s dept=%s",
-                    DEFAULT_ADMIN_USER, DEFAULT_ADMIN_DEPARTMENT)
+        from SmartQuery.backend.config import DEFAULT_ADMIN_USER, DEFAULT_ADMIN_PASSWORD
+        create_user(DEFAULT_ADMIN_USER, DEFAULT_ADMIN_PASSWORD, "admin")
+        logger.info("seeded default admin user=%s", DEFAULT_ADMIN_USER)
     except Exception as e:
         logger.warning("seed_default_admin failed: %s", e)
 
@@ -302,8 +295,9 @@ class Document(Base):
     source = Column(String(255), unique=True, index=True, nullable=False)  # 文件名
     stored_path = Column(String(512), nullable=True)   # 落盘路径（用于重建索引）
     file_hash = Column(String(64), nullable=True)
-    doc_type = Column(String(64), nullable=False, default="员工手册")
-    department = Column(String(64), nullable=False, default="公共")
+    doc_type = Column(String(64), nullable=False, default="article")
+    title = Column(String(512), nullable=True)         # 文章标题（WixQA）
+    url = Column(String(512), nullable=True)           # 原文链接（WixQA）
     chunk_count = Column(Integer, nullable=False, default=0)
     version = Column(Integer, nullable=False, default=1)
     status = Column(String(16), nullable=False, default="active")  # active / deleted
@@ -314,7 +308,8 @@ class Document(Base):
 def _doc_to_dict(d: Document) -> dict:
     return {
         "id": d.id, "source": d.source, "stored_path": d.stored_path,
-        "file_hash": d.file_hash, "doc_type": d.doc_type, "department": d.department,
+        "file_hash": d.file_hash, "doc_type": d.doc_type,
+        "title": d.title, "url": d.url,
         "chunk_count": d.chunk_count, "version": d.version, "status": d.status,
         "updated_at": str(d.updated_at), "created_at": str(d.created_at),
     }
@@ -349,21 +344,22 @@ def list_documents(limit: int = 200) -> list[dict]:
 
 
 def upsert_document(source: str, stored_path: str, file_hash: str, doc_type: str,
-                    department: str, chunk_count: int) -> dict:
+                    chunk_count: int, title: str = "", url: str = "") -> dict:
     """新建或更新文档记录；更新时 version+1、status 置回 active"""
     db = SessionLocal()
     try:
         d = db.query(Document).filter(Document.source == source).first()
         if d is None:
             d = Document(source=source, stored_path=stored_path, file_hash=file_hash,
-                         doc_type=doc_type, department=department,
+                         doc_type=doc_type, title=title, url=url,
                          chunk_count=chunk_count, version=1, status="active")
             db.add(d)
         else:
             d.stored_path = stored_path
             d.file_hash = file_hash
             d.doc_type = doc_type
-            d.department = department
+            d.title = title or d.title
+            d.url = url or d.url
             d.chunk_count = chunk_count
             d.version = (d.version or 1) + 1
             d.status = "active"
@@ -385,5 +381,46 @@ def soft_delete_document(doc_id: int) -> dict | None:
         d.status = "deleted"
         db.commit()
         return info
+    finally:
+        db.close()
+
+
+# ---------------- 答案反馈（点赞 / 点踩）---------------- #
+
+class Feedback(Base):
+    """答案反馈：用户对回答点赞/点踩，用于闭环收集 badcase"""
+    __tablename__ = "feedback"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, index=True, nullable=True)
+    session_id = Column(String(64), index=True, nullable=True)
+    question = Column(Text, nullable=True)
+    answer = Column(Text, nullable=True)
+    rating = Column(String(8), nullable=False)   # up / down
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+def save_feedback(rating: str, user_id: int | None = None, session_id: str = "",
+                  question: str = "", answer: str = "", comment: str = "") -> int:
+    db = SessionLocal()
+    try:
+        row = Feedback(user_id=user_id, session_id=session_id, question=question,
+                       answer=answer, rating=rating, comment=comment)
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+        return row.id
+    finally:
+        db.close()
+
+
+def feedback_stats() -> dict:
+    """反馈统计：点赞/点踩数量"""
+    db = SessionLocal()
+    try:
+        up = db.query(func.count(Feedback.id)).filter(Feedback.rating == "up").scalar() or 0
+        down = db.query(func.count(Feedback.id)).filter(Feedback.rating == "down").scalar() or 0
+        return {"up": up, "down": down, "total": up + down}
     finally:
         db.close()

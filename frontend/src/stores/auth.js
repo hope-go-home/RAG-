@@ -33,13 +33,11 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref(JSON.parse(readStorage(USER_KEY) || 'null'))
 
   const isAdmin = computed(() => user.value?.role === 'admin')
-  const department = computed(() => user.value?.department || '公共')
 
   function setAuth(data) {
     token.value = data.token
     user.value = {
       username: data.username,
-      department: data.department,
       role: data.role,
     }
     writeStorage(TOKEN_KEY, token.value)
@@ -49,7 +47,6 @@ export const useAuthStore = defineStore('auth', () => {
   function setUser(u) {
     user.value = {
       username: u.username,
-      department: u.department,
       role: u.role,
     }
     writeStorage(USER_KEY, JSON.stringify(user.value))
@@ -62,5 +59,5 @@ export const useAuthStore = defineStore('auth', () => {
     removeStorage(USER_KEY)
   }
 
-  return { token, user, isAdmin, department, setAuth, setUser, logout }
+  return { token, user, isAdmin, setAuth, setUser, logout }
 })

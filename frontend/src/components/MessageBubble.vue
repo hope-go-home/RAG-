@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+import { t } from '../i18n'
 
 const props = defineProps({
   role: { type: String, required: true },
@@ -18,10 +19,10 @@ const rendered = computed(() => {
 
 <template>
   <div :class="['msg', role]">
-    <div class="msg-tag">{{ role === 'user' ? '问' : '答' }}</div>
+    <div class="msg-tag">{{ role === 'user' ? t('chat.ask') : t('chat.answer') }}</div>
     <div :class="['msg-body', { streaming }]">
       <div v-if="content" class="md" v-html="rendered" />
-      <span v-else-if="role === 'assistant'" class="pending">生成中</span>
+      <span v-else-if="role === 'assistant'" class="pending">{{ t('chat.generating') }}</span>
     </div>
   </div>
 </template>

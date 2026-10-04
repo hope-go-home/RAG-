@@ -1,12 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-import { uploadFiles } from '../api/index'
-import { DOC_TYPES } from '../utils/docTypes'
-import { DEPARTMENTS, DEFAULT_DEPARTMENT } from '../utils/departments'
+import { uploadFiles } from '../api'
+import { ARTICLE_TYPES, typeColor } from '../utils/articleTypes'
+import { t } from '../i18n'
 
 const files = ref([])
-const docType = ref(DOC_TYPES[0].name)
-const department = ref(DEFAULT_DEPARTMENT)
+const docType = ref('article')
 const uploading = ref(false)
 const results = ref([])
 const over = ref(false)
@@ -36,15 +35,15 @@ async function handleUpload() {
   uploading.value = true
   results.value = []
   try {
-    const res = await uploadFiles(files.value, docType.value, department.value)
+    const res = await uploadFiles(files.value, docType.value)
     results.value = res.results || []
     files.value = []
     if (fileInput.value) fileInput.value.value = ''
   } catch (e) {
     results.value = [{
-      file: '上传',
+      file: 'upload',
       status: 'failed',
-      message: e.response?.data?.detail || e.message || '上传失败',
+      message: e.response?.data?.detail || e.message || t('upload.failed'),
     }]
   } finally {
     uploading.value = false
@@ -55,8 +54,8 @@ async function handleUpload() {
 <template>
   <section class="panel">
     <header class="panel-head">
-      <h3 class="panel-label">文档入库</h3>
-      <span class="panel-meta">pdf · docx · md · xlsx · 图片</span>
+      <h3 class="panel-label">{{ t('upload.title') }}</h3>
+      <span class="panel-meta">{{ t('upload.formats') }}</span>
     </header>
     <div class="panel-body">
       <div
@@ -68,8 +67,9 @@ async function handleUpload() {
         @click="fileInput.click()"
       >
         <div class="drop-plus">＋</div>
-        <div class="drop-main">{{ files.length ? `已选 ${files.length} 份` : '点击或拖入文件' }}</div>
-        <div class="drop-hint">PDF / WORD / TXT / MD / EXCEL / 图片(OCR)</div>
+        <div class="drop-main">
+          {{ files.length ? t('upload.selected').replace('{n}', files.length) : t('upload.drop') }}
+        </div>
         <input
           ref="fileInput"
           type="file"
@@ -82,25 +82,18 @@ async function handleUpload() {
 
       <div class="type-grid">
         <button
-          v-for="d in DOC_TYPES"
-          :key="d.name"
-          :class="['type-btn', { active: docType === d.name }]"
-          @click="docType = d.name"
+          v-for="ty in ARTICLE_TYPES"
+          :key="ty.name"
+          :class="['type-btn', { active: docType === ty.name }]"
+          @click="docType = ty.name"
         >
-          <span class="type-dot" :style="{ background: d.color }" />{{ d.short }}
+          <span class="type-dot" :style="{ background: typeColor(ty.name) }" />{{ t(ty.labelKey) }}
         </button>
       </div>
 
-      <label class="dept dept-block">
-        <span class="dept-label">归属部门</span>
-        <select v-model="department" class="dept-select">
-          <option v-for="d in DEPARTMENTS" :key="d" :value="d">{{ d }}</option>
-        </select>
-      </label>
-
       <div class="field-row">
         <button class="btn" style="flex: 1" :disabled="!files.length || uploading" @click="handleUpload">
-          {{ uploading ? '入库中' : '入库' }}
+          {{ uploading ? t('upload.uploading') : t('upload.submit') }}
         </button>
       </div>
 

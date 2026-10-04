@@ -58,7 +58,7 @@ from SmartQuery.rag.agent import (
 )
 
 EVAL_DIR = Path(__file__).resolve().parent
-GOLDEN_FILE = EVAL_DIR / "golden_set.json"
+GOLDEN_FILE = EVAL_DIR / "golden_wixqa.json"
 REPORT_DIR = EVAL_DIR / "report"
 STRATEGIES = ["dense_only", "sparse_only", "hybrid_rrf", "hybrid_rerank", "hybrid_multiquery", "agentic"]
 TOP_KS = [1, 3, 5, 10]
@@ -66,53 +66,72 @@ TOP_KS = [1, 3, 5, 10]
 
 # ---------------- 语料与标注 ----------------
 
-def fetch_all_parents(collection_name: str | None = None) -> list[str]:
-    """从 Milvus 拉取全部父块文本（去重），作为召回率计算的全集"""
+def fetch_all_parents(collection_name: str | None = None) -> list[tuple[str, str]]:
+    """从 Milvus 拉取全部父块文本（去重），返回 (parent_text, source) 列表。
+
+    单次查询结果有大小上限（父块文本可能很大），失败时自动减半批大小重试。
+    """
     from pymilvus import Collection
+    from pymilvus.exceptions import MilvusException
 
     name = collection_name or COLLECTION_NAME
     collection = Collection(name=name)
     collection.load()
-    parents: list[str] = []
+    parents: list[tuple[str, str]] = []
     seen: set[str] = set()
-    offset, batch = 0, 8192
+    offset, batch = 0, 200
     while True:
-        res = collection.query(
-            expr="id >= 0", output_fields=["parent_text"], limit=batch, offset=offset
-        )
+        try:
+            res = collection.query(
+                expr="id >= 0", output_fields=["parent_text", "source"],
+                limit=batch, offset=offset,
+            )
+        except MilvusException as e:
+            if batch > 5 and "limit size" in str(e):
+                batch = max(5, batch // 2)
+                continue
+            raise
         if not res:
             break
         for row in res:
             text = row.get("parent_text")
             if text and text not in seen:
                 seen.add(text)
-                parents.append(text)
+                parents.append((text, row.get("source", "")))
         offset += len(res)
         if len(res) < batch:
             break
     return parents
 
 
-def load_golden() -> list[dict]:
-    return json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
+def load_golden(golden_file: Path | None = None) -> list[dict]:
+    return json.loads((golden_file or GOLDEN_FILE).read_text(encoding="utf-8"))
 
 
-def build_gold_mapping(parents: list[str], golden: list[dict]) -> tuple[list[dict], list[set[int]]]:
-    """对每个问题，找出所有包含任一黄金短语的父块下标集合"""
+def build_gold_mapping(parents: list, golden: list[dict]) -> tuple[list[dict], list[set]]:
+    """对每个问题，给出相关键集合。
+
+    两种口径：
+      - gold_sources：相关键 = 文章文件名（source），与检索结果的 source 直接匹配（WixQA，文章级）
+      - gold_phrases：相关键 = 包含黄金短语的父块下标（旧中文语料，父块级）
+    """
     questions, gold_sets, skipped = [], [], []
     for item in golden:
-        relevant = {
-            i for i, p in enumerate(parents)
-            if any(phrase in p for phrase in item["gold_phrases"])
-        }
-        if not relevant:
+        sources = item.get("gold_sources")
+        if sources:
+            gold = set(sources)
+        else:
+            phrases = item.get("gold_phrases", [])
+            gold = {i for i, (p, _) in enumerate(parents)
+                    if any(phrase in p for phrase in phrases)}
+        if not gold:
             skipped.append(item["question"])
             continue
         questions.append(item)
-        gold_sets.append(relevant)
+        gold_sets.append(gold)
     if skipped:
-        print(f"[warn] {len(skipped)} 个问题在库中找不到对应父块，已跳过：")
-        for q in skipped:
+        print(f"[warn] {len(skipped)} 个问题缺少可判定的 gold，已跳过：")
+        for q in skipped[:10]:
             print(f"       - {q}")
     return questions, gold_sets
 
@@ -162,29 +181,57 @@ def _dedupe(items: list[str]) -> list[str]:
 
 
 def retrieve_strategy(strategy: str, question: str, dense: list, sparse: list,
-                      top_k: int, gold: set[int], parent_to_idx: dict[str, int],
-                      collection_name: str | None = None) -> tuple[list[str], dict]:
-    """返回 (top_k 父块文本列表, 附加信息)。agentic 用 gold 判定是否需要重检。"""
+                      top_k: int, gold: set, parent_to_idx: dict[str, int],
+                      collection_name: str | None = None, source_level: bool = False) -> tuple[list, dict]:
+    """返回 (top_k 检索键列表, 附加信息)。
+
+    source_level=True 时键为来源文件名（文章级评测），否则为父块文本（父块级评测）。
+    """
+    key_ix = 4 if source_level else 1  # search 元组中 source[4] / parent_text[1]
+    src_of_parent = {}
+    for it in list(dense) + list(sparse):
+        src_of_parent.setdefault(it[1], it[4])
+
     if strategy == "dense_only":
-        return _dedupe(x[1] for x in dense)[:top_k], {}
+        return _dedupe(x[key_ix] for x in dense)[:top_k], {}
     if strategy == "sparse_only":
-        return _dedupe(x[1] for x in sparse)[:top_k], {}
+        return _dedupe(x[key_ix] for x in sparse)[:top_k], {}
     if strategy == "hybrid_rrf":
-        return rrf_fusion(dense, sparse)[:top_k], {}
+        ranked = rrf_fusion(dense, sparse)
+        if source_level:
+            return _dedupe(src_of_parent[p] for p in ranked if src_of_parent.get(p))[:top_k], {}
+        return ranked[:top_k], {}
     if strategy == "hybrid_rerank":
-        return retrieve_with_meta(question, top_k=top_k, collection_name=collection_name).documents, {}
+        res = retrieve_with_meta(
+            question, top_k=top_k, collection_name=collection_name,
+            candidate_pool=100 if source_level else None,
+            rerank_pool=40 if source_level else None,
+        )
+        return ([s.source for s in res.sources] if source_level else res.documents), {}
     if strategy == "hybrid_multiquery":
-        return retrieve_multi_query(question, top_k=top_k, collection_name=collection_name).documents, {}
+        res = retrieve_multi_query(
+            question, top_k=top_k, collection_name=collection_name,
+            candidate_pool=100 if source_level else None,
+            rerank_pool=40 if source_level else None,
+        )
+        return ([s.source for s in res.sources] if source_level else res.documents), {}
 
     # ---- agentic：质量不足时 LLM 改写检索词重检，合并多轮结果 ----
-    docs: list[str] = []
+    keys: list = []
     rewrites: list[str] = []
     query = question
     attempts = 0
     while attempts < MAX_RETRIEVAL_ATTEMPTS:
         attempts += 1
-        res = retrieve_with_meta(query, top_k=top_k, collection_name=collection_name)
-        docs = _dedupe(docs + list(res.documents))
+        res = retrieve_with_meta(
+            query, top_k=top_k, collection_name=collection_name,
+            candidate_pool=100 if source_level else None,
+            rerank_pool=40 if source_level else None,
+        )
+        if source_level:
+            keys = _dedupe(keys + [s.source for s in res.sources])
+        else:
+            keys = _dedupe(keys + list(res.documents))
         if not res.sources:
             break
         max_score = max(s.rerank_score for s in res.sources)
@@ -201,7 +248,7 @@ def retrieve_strategy(strategy: str, question: str, dense: list, sparse: list,
         query = new_q
         rewrites.append(new_q)
 
-    return docs[:top_k], {"rewrites": rewrites, "attempts": attempts}
+    return keys[:top_k], {"rewrites": rewrites, "attempts": attempts}
 
 
 # ---------------- 主流程 ----------------
@@ -215,6 +262,8 @@ def main() -> None:
                         help="指定 Milvus 集合（消融实验用，如 kb_adaptive）")
     parser.add_argument("--strategies", nargs="+", default=STRATEGIES,
                         help="要对比的策略，默认全部五条")
+    parser.add_argument("--golden", type=str, default=None,
+                        help="标注集路径（默认 golden_wixqa.json）")
     args = parser.parse_args()
     ks = [k for k in TOP_KS if k <= args.top_k]
     if not ks:
@@ -222,13 +271,25 @@ def main() -> None:
     strategies = [s for s in args.strategies if s in STRATEGIES]
 
     connect_milvus()
-    print("[1/4] 拉取语料父块 ...")
-    parents = fetch_all_parents(args.collection)
-    print(f"      父块总数（去重后）: {len(parents)}")
 
     print("[2/4] 加载标注集并计算 gold 集合 ...")
-    golden = load_golden()
-    questions, gold_sets = build_gold_mapping(parents, golden)
+    golden = load_golden(Path(args.golden) if args.golden else None)
+    source_level = any("gold_sources" in it for it in golden)
+
+    if source_level:
+        # 文章级评测（WixQA）：gold 为 source，无需加载全部父块
+        parents = []
+        questions, gold_sets = build_gold_mapping(parents, golden)
+        from pymilvus import Collection
+        corpus_size = Collection(name=args.collection or COLLECTION_NAME).num_entities
+        print(f"[1/4] 文章级评测，语料块数：{corpus_size}")
+    else:
+        print("[1/4] 拉取语料父块 ...")
+        parents = fetch_all_parents(args.collection)
+        corpus_size = len(parents)
+        questions, gold_sets = build_gold_mapping(parents, golden)
+        print(f"      父块总数（去重后）: {corpus_size}")
+
     if args.limit:
         questions, gold_sets = questions[: args.limit], gold_sets[: args.limit]
     print(f"      有效评估问题数: {len(questions)}")
@@ -236,7 +297,8 @@ def main() -> None:
         print("没有可评估的问题，退出")
         return
 
-    parent_to_idx = {p: i for i, p in enumerate(parents)}
+    parent_to_idx = {} if source_level else {p: i for i, (p, _) in enumerate(parents)}
+    search_k = max(args.top_k * 5, 50) if source_level else args.top_k
 
     print("[3/4] 逐问题检索评估 ...")
     agg = defaultdict(lambda: defaultdict(list))
@@ -248,19 +310,22 @@ def main() -> None:
         level = item.get("level", "A_事实单跳")
         qvec = embed_query(question)
         qsparse = embed_query_sparse(question)
-        dense = search_dense(qvec, top_k=args.top_k, partition_name=args.partition,
+        dense = search_dense(qvec, top_k=search_k, partition_name=args.partition,
                              collection_name=args.collection)
-        sparse = search_sparse(qsparse, top_k=args.top_k, partition_name=args.partition,
+        sparse = search_sparse(qsparse, top_k=search_k, partition_name=args.partition,
                                collection_name=args.collection)
 
         row = {"question": question, "level": level,
                "doc_type": item.get("doc_type", ""), "gold_count": len(gold)}
         for strategy in strategies:
-            ranked_parents, extra = retrieve_strategy(
+            ranked_keys, extra = retrieve_strategy(
                 strategy, question, dense, sparse, args.top_k, gold, parent_to_idx,
-                collection_name=args.collection
+                collection_name=args.collection, source_level=source_level,
             )
-            ranked_idx = [parent_to_idx[p] for p in _dedupe(ranked_parents) if p in parent_to_idx]
+            if source_level:
+                ranked_idx = _dedupe(ranked_keys)
+            else:
+                ranked_idx = [parent_to_idx[p] for p in _dedupe(ranked_keys) if p in parent_to_idx]
             for k in ks:
                 hits = sum(1 for idx in ranked_idx[:k] if idx in gold)
                 recall = hits / len(gold)
@@ -323,7 +388,8 @@ def main() -> None:
         json.dumps({"summary": summary, "ci": ci, "level_stats": level_stats,
                     "doc_type_stats": doc_type_stats,
                     "per_question": per_question,
-                    "corpus_size": len(parents), "question_count": len(questions),
+                    "corpus_size": corpus_size, "question_count": len(questions),
+                    "level": "source" if source_level else "parent",
                     "total_rewrites": rewrite_count},
                    ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -332,7 +398,7 @@ def main() -> None:
     lines = [
         "# RAG 检索质量评估报告",
         "",
-        f"- 语料父块数：{len(parents)}",
+        f"- 语料规模：{corpus_size}",
         f"- 评估问题数：{len(questions)}",
         f"- 生成时间：{time.strftime('%Y-%m-%d %H:%M:%S')}",
         "",

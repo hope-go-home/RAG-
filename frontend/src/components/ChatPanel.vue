@@ -1,36 +1,29 @@
 <script setup>
 import { ref, nextTick, watch, computed } from 'vue'
 import { useChatStore } from '../stores/chat'
-import { useAuthStore } from '../stores/auth'
 import MessageBubble from './MessageBubble.vue'
-import { DOC_TYPES, docColor } from '../utils/docTypes'
-import { deptHint } from '../utils/departments'
+import SourceCard from './SourceCard.vue'
+import Feedback from './Feedback.vue'
+import { t } from '../i18n'
 
 const store = useChatStore()
-const auth = useAuthStore()
 const inputText = ref('')
 const streamRef = ref(null)
 
-// 参考来源去重（按文件名），用于答案下方展示引用
-const uniqueSources = computed(() => {
-  const seen = new Set()
-  const out = []
-  for (const s of store.sources) {
-    const key = s.source || s.doc_type
-    if (key && !seen.has(key)) {
-      seen.add(key)
-      out.push(s)
-    }
-  }
-  return out
-})
+const examples = computed(() => t('chat.examples'))
 
-const EXAMPLES = [
-  '公司年假有多少天？',
-  '请假审批流程的第一步是什么？',
-  '差旅费住宿标准是多少？',
-  '密码长度最低要求是多少位？',
-]
+const lastUserQuestion = computed(() => {
+  for (let i = store.messages.length - 1; i >= 0; i--) {
+    if (store.messages[i].role === 'user') return store.messages[i].content
+  }
+  return ''
+})
+const lastAnswer = computed(() => {
+  for (let i = store.messages.length - 1; i >= 0; i--) {
+    if (store.messages[i].role === 'assistant') return store.messages[i].content
+  }
+  return ''
+})
 
 function scrollToBottom() {
   nextTick(() => {
@@ -66,7 +59,7 @@ function useExample(q) {
 function autoResize(e) {
   const el = e.target
   el.style.height = 'auto'
-  el.style.height = Math.min(el.scrollHeight, 140) + 'px'
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px'
 }
 </script>
 
@@ -74,20 +67,13 @@ function autoResize(e) {
   <div class="chat">
     <div v-if="!store.messages.length" class="chat-empty">
       <div class="empty-card">
-        <div class="empty-tabs">
-          <span
-            v-for="d in DOC_TYPES"
-            :key="d.name"
-            class="empty-tab"
-            :style="{ background: d.color }"
-          />
-        </div>
-        <h1 class="empty-title">企业知识库智能问答</h1>
-        <p class="empty-sub">Enterprise Knowledge Base · Retrieval-Augmented Generation</p>
+        <div class="empty-eyebrow">WIX HELP CENTER · HYBRID RAG</div>
+        <h1 class="empty-title">{{ t('chat.heroTitle') }}</h1>
+        <p class="empty-sub">{{ t('chat.heroSub') }}</p>
         <div class="empty-rule" />
-        <p class="empty-label">试问 / SAMPLE QUERIES</p>
+        <p class="empty-label">{{ t('chat.examplesLabel') }}</p>
         <div class="examples">
-          <button v-for="q in EXAMPLES" :key="q" class="example" @click="useExample(q)">
+          <button v-for="q in examples" :key="q" class="example" @click="useExample(q)">
             {{ q }}
           </button>
         </div>
@@ -102,35 +88,31 @@ function autoResize(e) {
         :content="msg.content"
         :streaming="store.streaming && i === store.messages.length - 1"
       />
-      <div
-        v-if="store.streaming && !store.messages[store.messages.length - 1]?.content"
-        class="pending"
-      >
-        检索中
-      </div>
 
-      <div v-if="!store.streaming && uniqueSources.length" class="answer-sources">
-        <span class="answer-sources-label">参考来源</span>
-        <span
-          v-for="(s, i) in uniqueSources"
-          :key="i"
-          class="answer-source-chip"
-          :style="{ borderLeftColor: docColor(s.doc_type) }"
-        >{{ s.source || s.doc_type }}</span>
+      <div v-if="!store.streaming && store.sources.length" class="answer-sources">
+        <div class="answer-sources-head">{{ t('chat.reference') }}</div>
+        <div class="answer-sources-list">
+          <SourceCard
+            v-for="(s, i) in store.sources"
+            :key="i"
+            :item="s"
+            :index="i"
+          />
+        </div>
+        <Feedback
+          :question="lastUserQuestion"
+          :answer="lastAnswer"
+          :session-id="store.sessionId"
+        />
       </div>
     </div>
 
     <div class="composer">
-      <div class="composer-bar">
-        <span class="dept-label">当前部门</span>
-        <span class="dept-value">{{ auth.department }}</span>
-        <span class="dept-hint">{{ deptHint(auth.department) }}</span>
-      </div>
       <div class="composer-inner">
         <textarea
           v-model="inputText"
           class="composer-input"
-          placeholder="输入问题，回车发送"
+          :placeholder="t('chat.placeholder')"
           rows="1"
           :disabled="store.streaming"
           @keydown="handleKeydown"
@@ -140,9 +122,7 @@ function autoResize(e) {
           class="composer-send"
           :disabled="store.streaming || !inputText.trim()"
           @click="handleSend"
-        >
-          ➤
-        </button>
+        >{{ t('chat.send') }}</button>
       </div>
     </div>
   </div>

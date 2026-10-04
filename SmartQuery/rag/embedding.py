@@ -13,48 +13,46 @@ embeddings = OpenAIEmbeddings(
     dimensions=2048,  # 指定输出维度
 )
 
-"""
-说明：本项目走 OpenAIEmbeddings 兼容通道（端点 .../compatible-mode/v1/embeddings）。
-稠密向量模型由 .env 的 QWEN_EMBEDDING_MODEL 指定，默认 qwen3.7-text-embedding。
-另一条备选是 DashScope 原生 API（DashScopeEmbeddings），但依赖 langchain_community 版本，故未采用。
-"""
-
 
 def embed_documents(texts: list[str]) -> list[list[float]]:
+    """qwen 稠密向量（2048 维）——批量入库"""
     if not texts:
         return []
     return embeddings.embed_documents(texts)
-#定义一个函数，接收一个字符串列表 texts，返回类型为 list[list[float]]，即每个输入文本对应一个浮点数向量（列表形式） 批量编码多个文档（如知识库段落）
-"""
-embeddings 是通过 OpenAIEmbeddings(...) 创建的一个对象实例，而 OpenAIEmbeddings 这个类正是从 langchain_openai 导入的（来自 LangChain 库）。
-因此，embeddings.embed_documents(texts) 调用的就是 LangChain 框架中 OpenAIEmbeddings 类提供的 embed_documents 方法
-这样方便，别的文件可以方便点用
-"""
- 
-def embed_query(text: str) -> list[float]:    #   （单个文本）向量化  编码单个查询（如用户问题）
+
+
+def embed_query(text: str) -> list[float]:
+    """qwen 稠密向量——单条查询"""
     return embeddings.embed_query(text)
 
 
-sparse_model = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
+# ---------------- BGE-M3：稠密(1024) + 稀疏，一次 forward 同时产出 ---------------- #
 
+bge_model = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
+
+
+def embed_documents_bge(texts: list[str]) -> tuple[list[list[float]], list[dict[int, float]]]:
+    """批量：返回 (bge 稠密 1024 维, bge 稀疏词汇权重)"""
+    if not texts:
+        return [], []
+    out = bge_model.encode(texts, return_dense=True, return_sparse=True)
+    dense = [list(map(float, v)) for v in out["dense_vecs"]]
+    sparse = [{int(t): float(w) for t, w in d.items()} for d in out["lexical_weights"]]
+    return dense, sparse
+
+
+def embed_query_bge(text: str) -> tuple[list[float], dict[int, float]]:
+    """单条查询：返回 (bge 稠密, bge 稀疏)"""
+    out = bge_model.encode([text], return_dense=True, return_sparse=True)
+    dense = list(map(float, out["dense_vecs"][0]))
+    sparse = {int(t): float(w) for t, w in out["lexical_weights"][0].items()}
+    return dense, sparse
+
+
+# 兼容旧接口（只取稀疏）
 def embed_query_sparse(text: str) -> dict[int, float]:
-    output = sparse_model.encode([text], return_sparse=True, return_dense=False)
-    raw = output['lexical_weights'][0]
-    return {int(t): float(w) for t, w in raw.items()}
+    return embed_query_bge(text)[1]
+
 
 def embed_documents_sparse(texts: list[str]) -> list[dict[int, float]]:
-    if not texts:
-        return []
-    output = sparse_model.encode(texts, return_sparse=True, return_dense=False)
-    results = []
-    for raw in output['lexical_weights']:
-        results.append({int(t): float(w) for t, w in raw.items()})
-    return results
-
-
-# 函数	稠密/稀疏	                       用途
-# embed_documents	        稠密	     入库批量
-# embed_query	            稠密	     问题单条
-# embed_documents_sparse	稀疏	     入库批量
-# embed_query_sparse	    稀疏	     问题单条
-#稠密向量是qwen3.7-text-embedding模型     稀疏向量是bge-m3模型
+    return embed_documents_bge(texts)[1]

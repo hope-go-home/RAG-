@@ -26,6 +26,8 @@ from SmartQuery.backend.database.mysql import (
     list_documents,
     upsert_document,
     soft_delete_document,
+    save_feedback,
+    feedback_stats,
 )
 from SmartQuery.backend.config import ALLOW_REGISTRATION
 from SmartQuery.backend.auth import (
@@ -81,6 +83,7 @@ session_locks_global = threading.Lock()  # 全局锁（保护 session_locks 字�
 class ChatRequest(BaseModel):
     question: str
     session_id: str | None = None
+    doc_type: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -91,17 +94,20 @@ class LoginRequest(BaseModel):
 class RegisterRequest(BaseModel):
     username: str
     password: str
-    department: str = "公共"
 
 
 class AdminUserRequest(BaseModel):
     username: str
     password: str
-    department: str = "公共"
     role: str = "user"
 
 
-ALLOWED_DEPARTMENTS = {"HR", "财务", "IT", "技术", "公共", "行政"}
+class FeedbackRequest(BaseModel):
+    rating: str                 # up / down
+    session_id: str | None = None
+    question: str = ""
+    answer: str = ""
+    comment: str = ""
 
 
 def _client_ip(request: Request) -> str:
@@ -118,11 +124,10 @@ def login(request: Request, body: LoginRequest):
         raise HTTPException(status_code=401, detail="用户名或密码错误")
     token = create_access_token(user)
     write_audit(user["id"], user["username"], "login", detail="success", ip=_client_ip(request))
-    logger.info("login ok user=%s dept=%s", user["username"], user["department"])
+    logger.info("login ok user=%s", user["username"])
     return {
         "token": token,
         "username": user["username"],
-        "department": user["department"],
         "role": user["role"],
     }
 
@@ -140,7 +145,7 @@ def audit(limit: int = 100, user: dict = Depends(require_admin)):
 
 @app.post("/auth/register")
 def register(request: Request, body: RegisterRequest):
-    """自助注册：新用户 role=user，部门限制在白名单内"""
+    """自助注册：新用户 role=user"""
     if not ALLOW_REGISTRATION:
         raise HTTPException(status_code=403, detail="系统未开放注册，请联系管理员")
     username = body.username.strip()
@@ -150,13 +155,11 @@ def register(request: Request, body: RegisterRequest):
         raise HTTPException(status_code=400, detail="密码至少 6 位")
     if get_user_by_username(username):
         raise HTTPException(status_code=409, detail="用户名已存在")
-    dept = body.department if body.department in ALLOWED_DEPARTMENTS else "公共"
-    user_id = create_user(username, body.password, dept, "user")
-    write_audit(user_id, username, "register", resource=dept, ip=_client_ip(request))
-    logger.info("register ok user=%s dept=%s", username, dept)
-    token = create_access_token({"id": user_id, "username": username,
-                                 "department": dept, "role": "user"})
-    return {"token": token, "username": username, "department": dept, "role": "user"}
+    user_id = create_user(username, body.password, "user")
+    write_audit(user_id, username, "register", ip=_client_ip(request))
+    logger.info("register ok user=%s", username)
+    token = create_access_token({"id": user_id, "username": username, "role": "user"})
+    return {"token": token, "username": username, "role": "user"}
 
 
 @app.get("/auth/users")
@@ -168,7 +171,7 @@ def users(limit: int = 200, user: dict = Depends(require_admin)):
 @app.post("/auth/users")
 def create_user_admin(request: Request, body: AdminUserRequest,
                       user: dict = Depends(require_admin)):
-    """管理员创建用户（可指定部门与角色）"""
+    """管理员创建用户（可指定角色）"""
     username = body.username.strip()
     if not (3 <= len(username) <= 32):
         raise HTTPException(status_code=400, detail="用户名长度需为 3-32 位")
@@ -178,12 +181,11 @@ def create_user_admin(request: Request, body: AdminUserRequest,
         raise HTTPException(status_code=409, detail="用户名已存在")
     if body.role not in ("admin", "user"):
         raise HTTPException(status_code=400, detail="角色只能是 admin / user")
-    dept = body.department if body.department in ALLOWED_DEPARTMENTS else "公共"
-    uid = create_user(username, body.password, dept, body.role)
+    uid = create_user(username, body.password, body.role)
     write_audit(user["id"], user["username"], "create_user",
-                resource=username, detail=f"dept={dept} role={body.role}",
+                resource=username, detail=f"role={body.role}",
                 ip=_client_ip(request))
-    return {"id": uid, "username": username, "department": dept, "role": body.role}
+    return {"id": uid, "username": username, "role": body.role}
 
 
 # ------------------ 启动事件 ------------------ #
@@ -200,10 +202,11 @@ def startup():
 
 @app.post("/chat")
 def chat(request: Request, question: str = Query(...), session_id: str = Query(default=None),
+         doc_type: str = Query(default=None),
          user: dict = Depends(get_current_user)):
     sid = session_id or uuid.uuid4().hex[:8]
     logger.info("chat start session=%s user=%s question=%s", sid, user["username"], question[:100])
-    initial_state = _build_initial_state(sid, question, user["department"])
+    initial_state = _build_initial_state(sid, question, doc_type)
     result = rag_agent.invoke(initial_state)
     _persist_session(sid, question, result, user["id"])
     write_audit(user["id"], user["username"], "chat", resource=question[:120], ip=_client_ip(request))
@@ -228,7 +231,7 @@ def _sse(event: str, data: dict) -> str:
 async def chat_stream(http_request: Request, request: ChatRequest,
                       user: dict = Depends(get_current_user)):
     sid = request.session_id or uuid.uuid4().hex[:8]
-    initial_state = _build_initial_state(sid, request.question, user["department"])
+    initial_state = _build_initial_state(sid, request.question, request.doc_type)
 
     async def event_generator():
         accumulated = {}  # 累积所有节点的输出，避免后一节点覆盖前一节点的字段
@@ -282,6 +285,7 @@ async def chat_stream(http_request: Request, request: ChatRequest,
             yield _sse("done", {"session_id": sid})
 
         except Exception as e:
+            logger.exception("chat_stream failed session=%s", sid)
             yield _sse("error", {"message": str(e)})
 
     return StreamingResponse(
@@ -312,8 +316,7 @@ def _file_sha256(path: str) -> str:
 
 @app.post("/upload")
 async def upload(request: Request, files: list[UploadFile] = File(...),
-                 doc_type: str = Form(default="员工手册"),
-                 department: str = Form(default="公共"),
+                 doc_type: str = Form(default="article"),
                  user: dict = Depends(require_admin)):
     results = []
     logger.info("upload start files=%d user=%s", len(files), user["username"])
@@ -369,8 +372,8 @@ async def upload(request: Request, files: list[UploadFile] = File(...),
             if existing:
                 # 增量更新：先删除旧块，再重新入库
                 delete_by_source(source)
-            count = ingest_file(save_path, doc_type=doc_type, department=department, source=source)
-            rec = upsert_document(source, save_path, file_hash, doc_type, department, count)
+            count = ingest_file(save_path, doc_type=doc_type, source=source)
+            rec = upsert_document(source, save_path, file_hash, doc_type, count)
             save_file_record(file_hash, source, get_partition(save_path), count)
             logger.info("upload %s file=%s chunks=%d version=%d ocr=%s",
                         "updated" if existing else "success", source, count, rec["version"], used_ocr)
@@ -429,9 +432,10 @@ def reindex_document(doc_id: int, request: Request, user: dict = Depends(require
         raise HTTPException(status_code=400, detail="原始文件不存在，无法重建索引")
     delete_by_source(info["source"])
     count = ingest_file(info["stored_path"], doc_type=info["doc_type"],
-                        department=info["department"], source=info["source"])
+                        source=info["source"])
     rec = upsert_document(info["source"], info["stored_path"], info["file_hash"] or "",
-                          info["doc_type"], info["department"], count)
+                          info["doc_type"], count,
+                          title=info.get("title", ""), url=info.get("url", ""))
     write_audit(user["id"], user["username"], "reindex", resource=info["source"], ip=_client_ip(request))
     logger.info("document reindexed source=%s chunks=%d version=%d",
                 info["source"], count, rec["version"])
@@ -466,11 +470,44 @@ def delete_session(session_id: str, request: Request, user: dict = Depends(get_c
     return {"status": "deleted", "session_id": session_id, "records": n}
 
 
+# ------------------ 反馈 / 评测 ------------------ #
+
+@app.post("/feedback")
+def feedback(body: FeedbackRequest, user: dict = Depends(get_current_user)):
+    """答案反馈：点赞 / 点踩，用于闭环收集 badcase"""
+    if body.rating not in ("up", "down"):
+        raise HTTPException(status_code=400, detail="rating 只能是 up / down")
+    fid = save_feedback(body.rating, user_id=user["id"], session_id=body.session_id or "",
+                        question=body.question[:2000], answer=body.answer[:4000],
+                        comment=body.comment[:1000])
+    logger.info("feedback user=%s rating=%s", user["username"], body.rating)
+    return {"status": "ok", "id": fid}
+
+
+@app.get("/feedback/stats")
+def feedback_summary(user: dict = Depends(require_admin)):
+    return feedback_stats()
+
+
+@app.get("/evaluation")
+def evaluation(user: dict = Depends(get_current_user)):
+    """返回离线评测报告（eval_retrieval.py 生成）"""
+    from pathlib import Path
+    report = Path(__file__).resolve().parents[1] / "evaluation" / "report" / "retrieval_eval.json"
+    if not report.exists():
+        return {"available": False, "message": "尚无评测报告，请先运行 eval_retrieval.py"}
+    try:
+        data = json.loads(report.read_text(encoding="utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"读取评测报告失败：{e}")
+    return {"available": True, "report": data}
+
+
 # ------------------ 内部辅助函数 ------------------ #
 
-def _build_initial_state(sid: str, question: str, department: str | None = None) -> dict:
+def _build_initial_state(sid: str, question: str, doc_type: str | None = None) -> dict:
     """构建 Agent 初始状态，复用已有 session 的上下文"""
-    state: dict = {"question": question, "department": department or "公共"}
+    state: dict = {"question": question, "doc_type": doc_type or ""}
 
     # 获取或创建 session 锁
     with session_locks_global:

@@ -28,8 +28,8 @@ export async function login(username, password) {
   return data
 }
 
-export async function register(username, password, department) {
-  const { data } = await http.post('/auth/register', { username, password, department })
+export async function register(username, password) {
+  const { data } = await http.post('/auth/register', { username, password })
   return data
 }
 
@@ -48,13 +48,12 @@ export async function getMe() {
   return data
 }
 
-export async function uploadFiles(files, docType, department) {
+export async function uploadFiles(files, docType) {
   const formData = new FormData()
   for (const file of files) {
     formData.append('files', file)
   }
   formData.append('doc_type', docType)
-  if (department) formData.append('department', department)
   const { data } = await http.post('/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
@@ -88,6 +87,16 @@ export async function deleteDocument(id) {
 
 export async function reindexDocument(id) {
   const { data } = await http.post(`/documents/${id}/reindex`)
+  return data
+}
+
+export async function sendFeedback(payload) {
+  const { data } = await http.post('/feedback', payload)
+  return data
+}
+
+export async function getEvaluation() {
+  const { data } = await http.get('/evaluation')
   return data
 }
 

@@ -16,7 +16,8 @@ def clean_text(text: str) -> str:
     if not text:
         return ""
     text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
-    allowed_chars = r'\u4e00-\u9fa5a-zA-Z0-9\s.,;:!?\u3002\uff0c\uff1b\uff1a\uff01\uff1f\u3001\uff08\uff09\u3010\u3011\u300a\u300b\u201c\u201d\u2018\u2019+/=%#@&*~^\|_-'
+    # 保留空白(含换行) + 可打印 ASCII(含英文撇号/引号/括号) + 中日韩文字 + 中文标点/全角
+    allowed_chars = r'\s\x21-\x7e\u4e00-\u9fff\u3000-\u303f\uff00-\uffef'
     text = re.sub(f'[^{allowed_chars}]', '', text)
     text = re.sub(r'\n\s*\n', '\n\n', text)
     text = '\n'.join(line.strip() for line in text.split('\n'))
@@ -179,8 +180,8 @@ def _load_image(file_path: str):
 
 # ==================== 分块策略 ====================
 
-parent_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=150)
-child_splitter = RecursiveCharacterTextSplitter(chunk_size=150, chunk_overlap=30)
+parent_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
+child_splitter = RecursiveCharacterTextSplitter(chunk_size=350, chunk_overlap=50)
 
 
 def _split_by_headers(text: str) -> list[str]:
@@ -419,8 +420,8 @@ def get_partition(file_path: str) -> str:
     return PARTITION_MAP.get(ext, "txt")
 
 
-def ingest_file(file_path: str, doc_type: str = "员工手册", department: str = "公共",
-                source: str | None = None, strategy: str = "adaptive",
+def ingest_file(file_path: str, doc_type: str = "", source: str | None = None,
+                title: str | None = None, url: str = "", strategy: str = "adaptive",
                 collection_name: str | None = None) -> int:
     docs = load_file(file_path, doc_type=doc_type)
     docs = clean_documents(docs)
@@ -436,9 +437,13 @@ def ingest_file(file_path: str, doc_type: str = "员工手册", department: str 
     partition = get_partition(file_path)
     insert_kwargs = {"collection_name": collection_name} if collection_name else {}
     source_name = source or os.path.basename(file_path)
+    if title is None:
+        title = _doc_title(docs[0].page_content) if docs else ""
+    n = len(child_texts)
     insert_documents(child_texts, parent_texts, dense_vectors, sparse_vectors, partition,
-                     doc_type=doc_type, department=department, source=source_name, **insert_kwargs)
+                     doc_type=doc_type, source=source_name,
+                     titles=[title] * n, urls=[url] * n, **insert_kwargs)
 
-    logger.info("ingest file=%s type=%s dept=%s source=%s strategy=%s partition=%s chunks=%d",
-                file_path, doc_type, department, source_name, strategy, partition, len(child_texts))
-    return len(child_texts)
+    logger.info("ingest file=%s type=%s source=%s strategy=%s partition=%s chunks=%d",
+                file_path, doc_type, source_name, strategy, partition, n)
+    return n

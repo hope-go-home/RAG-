@@ -37,9 +37,13 @@ class TestCleanText:
     def test_removes_page_footer(self):
         assert "共 5 页" not in clean_text("正文\n共 5 页")
 
-    def test_removes_special_chars(self):
-        r = clean_text("@#$%^ 中文")
-        assert "@#$%^" not in r and "中文" in r
+    def test_keeps_ascii_punct_removes_emoji(self):
+        # 支持英文语料：保留 ASCII 标点；表情等非文本字符被移除
+        r = clean_text("@#$%^ 中文 🎉")
+        assert "中文" in r and "@#$%^" in r and "🎉" not in r
+
+    def test_preserves_newlines(self):
+        assert "\n" in clean_text("第一行\n第二行")
 
     def test_collapses_blank_lines(self):
         assert "\n\n\n" not in clean_text("a\n\n\n\nb")

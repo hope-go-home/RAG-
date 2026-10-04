@@ -33,3 +33,6 @@ FlagEmbedding>=1.2.10
 
 # 请求
 requests>=2.31
+
+# 数据集下载（WixQA 语料转换）
+datasets>=2.18

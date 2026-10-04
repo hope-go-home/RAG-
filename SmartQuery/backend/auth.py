@@ -1,7 +1,7 @@
 """认证与授权：密码哈希、JWT 签发/校验、FastAPI 依赖
 
 设计要点：
-- 部门与角色写入 JWT，由服务端解析，前端无法伪造
+- 角色写入 JWT，由服务端解析，前端无法伪造
 - `get_current_user`：解析 Bearer token → 返回用户信息
 - `require_admin`：仅管理员可访问
 """
@@ -36,12 +36,11 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def create_access_token(user: dict) -> str:
-    """user: {id, username, department, role}"""
+    """user: {id, username, role}"""
     now = datetime.now(timezone.utc)
     payload = {
         "sub": str(user["id"]),
         "username": user["username"],
-        "department": user["department"],
         "role": user.get("role", "user"),
         "iat": now,
         "exp": now + timedelta(minutes=JWT_EXPIRE_MINUTES),
@@ -73,7 +72,6 @@ def get_current_user(
     return {
         "id": int(payload["sub"]),
         "username": payload.get("username", ""),
-        "department": payload.get("department", "公共"),
         "role": payload.get("role", "user"),
     }
 

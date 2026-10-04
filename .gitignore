@@ -8,6 +8,12 @@ SmartQuery/model/.cache/
 data/docs/*
 data/corpus/数据报表/*_temp.csv
 
+# WixQA 语料（由 scripts/load_wixqa.py 生成，不入库）
+data/wixqa_corpus/
+
+# 备份 / 日志
+backups/
+
 # 扫描件（脚本生成，用于 OCR 对比）
 data/corpus_scanned/
 

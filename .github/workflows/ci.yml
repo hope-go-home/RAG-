@@ -19,6 +19,10 @@ jobs:
         run: ruff check SmartQuery scripts tests
       - name: Compile check
         run: python -m compileall -q SmartQuery scripts
+      - name: Unit tests
+        run: |
+          pip install pytest
+          python -m pytest -q
 
   frontend:
     runs-on: ubuntu-latest
