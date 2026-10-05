@@ -2,7 +2,7 @@ import json
 import hashlib
 import time
 import threading
-from fastapi import FastAPI, UploadFile, File, Query, Request, Form, Depends, HTTPException
+from fastapi import FastAPI, UploadFile, File, Query, Request, Form, Depends, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -11,6 +11,7 @@ import uuid
 
 from SmartQuery.backend.logger import get_logger
 from SmartQuery.backend.health import health_router
+from SmartQuery.backend import metrics, ratelimit as rate
 from SmartQuery.backend.database.milvus import connect_milvus, create_collection, delete_by_source
 from SmartQuery.backend.database.mysql import (
     init_db,
@@ -28,8 +29,10 @@ from SmartQuery.backend.database.mysql import (
     soft_delete_document,
     save_feedback,
     feedback_stats,
+    get_tokens_today,
+    add_tokens,
 )
-from SmartQuery.backend.config import ALLOW_REGISTRATION
+from SmartQuery.backend.config import ALLOW_REGISTRATION, DAILY_TOKEN_BUDGET
 from SmartQuery.backend.auth import (
     create_access_token,
     verify_password,
@@ -58,20 +61,34 @@ app.add_middleware(
 
 @app.middleware("http")
 async def access_log(request: Request, call_next):
-    """访问日志：记录每个请求的方法、路径、状态码、耗时"""
+    """访问日志 + 指标：request-id 贯穿，记录耗时/状态/路径"""
+    rid = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
     start = time.perf_counter()
     try:
         response = await call_next(request)
-        elapsed = (time.perf_counter() - start) * 1000
+        elapsed = time.perf_counter() - start
+        route = request.scope.get("route")
+        path = getattr(route, "path", request.url.path)
+        metrics.HTTP_REQUESTS.labels(request.method, path, str(response.status_code)).inc()
+        metrics.HTTP_LATENCY.labels(request.method, path).observe(elapsed)
+        response.headers["X-Request-ID"] = rid
         logger.info(
-            "request %s %s -> %s (%.1fms)",
-            request.method, request.url.path, response.status_code, elapsed,
+            "rid=%s %s %s -> %s (%.1fms)",
+            rid, request.method, request.url.path, response.status_code, elapsed * 1000,
         )
         return response
     except Exception:
-        elapsed = (time.perf_counter() - start) * 1000
-        logger.exception("request %s %s failed (%.1fms)", request.method, request.url.path, elapsed)
+        elapsed = time.perf_counter() - start
+        logger.exception("rid=%s %s %s failed (%.1fms)",
+                         rid, request.method, request.url.path, elapsed * 1000)
         raise
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics_endpoint():
+    """Prometheus 指标抓取端点"""
+    content, content_type = metrics.metrics_response()
+    return Response(content=content, media_type=content_type)
 
 session_contexts = {}   # 存储每个 session 的上下文 + 对话历史，用于多轮对话
 session_locks = {}      # 每个 session 的锁
@@ -118,6 +135,8 @@ def _client_ip(request: Request) -> str:
 
 @app.post("/auth/login")
 def login(request: Request, body: LoginRequest):
+    if not rate.login_limiter.allow(rate.client_ip(request)):
+        raise HTTPException(status_code=429, detail="登录尝试过于频繁，请稍后再试")
     user = get_user_by_username(body.username)
     if not user or not user["is_active"] or not verify_password(body.password, user["password_hash"]):
         write_audit(None, body.username, "login", detail="failed", ip=_client_ip(request))
@@ -200,14 +219,33 @@ def startup():
 
 # ------------------ 同步 /chat（保留兼容）------------------ #
 
+def _check_chat_quota(user: dict) -> None:
+    """限流 + 每日 token 预算熔断（提问入口统一校验）"""
+    if not rate.chat_limiter.allow(f"u{user['id']}"):
+        raise HTTPException(status_code=429, detail="请求过于频繁，请稍后再试")
+    if DAILY_TOKEN_BUDGET:
+        used = get_tokens_today(user["id"])
+        if used >= DAILY_TOKEN_BUDGET:
+            raise HTTPException(status_code=429, detail="今日 token 额度已用尽，请明日再试")
+
+
+def _record_tokens(user_id: int | None, question: str, answer: str) -> None:
+    """记录本次问答的 token 估算量（DashScope 流式不返回 usage，故按字符估算）。"""
+    est = max(1, (len(question) + len(answer)) // 4)
+    add_tokens(user_id, est)
+    metrics.LLM_TOKENS.labels("estimated").inc(est)
+
+
 @app.post("/chat")
 def chat(request: Request, question: str = Query(...), session_id: str = Query(default=None),
          doc_type: str = Query(default=None),
          user: dict = Depends(get_current_user)):
+    _check_chat_quota(user)
     sid = session_id or uuid.uuid4().hex[:8]
     logger.info("chat start session=%s user=%s question=%s", sid, user["username"], question[:100])
     initial_state = _build_initial_state(sid, question, doc_type)
     result = rag_agent.invoke(initial_state)
+    _record_tokens(user["id"], question, result.get("answer", ""))
     _persist_session(sid, question, result, user["id"])
     write_audit(user["id"], user["username"], "chat", resource=question[:120], ip=_client_ip(request))
     logger.info("chat done session=%s answer_len=%d", sid, len(result.get("answer", "")))
@@ -230,6 +268,7 @@ def _sse(event: str, data: dict) -> str:
 @app.post("/chat/stream")
 async def chat_stream(http_request: Request, request: ChatRequest,
                       user: dict = Depends(get_current_user)):
+    _check_chat_quota(user)
     sid = request.session_id or uuid.uuid4().hex[:8]
     initial_state = _build_initial_state(sid, request.question, request.doc_type)
 
@@ -279,6 +318,7 @@ async def chat_stream(http_request: Request, request: ChatRequest,
                 answer = "抱歉，无法生成回答。请尝试换一种方式提问。"
             yield _sse("answer", {"answer": answer})
 
+            _record_tokens(user["id"], request.question, answer)
             _persist_session(sid, request.question, accumulated, user["id"])
             write_audit(user["id"], user["username"], "chat",
                         resource=request.question[:120], ip=_client_ip(http_request))
@@ -318,6 +358,8 @@ def _file_sha256(path: str) -> str:
 async def upload(request: Request, files: list[UploadFile] = File(...),
                  doc_type: str = Form(default="article"),
                  user: dict = Depends(require_admin)):
+    if not rate.upload_limiter.allow(f"u{user['id']}"):
+        raise HTTPException(status_code=429, detail="上传过于频繁，请稍后再试")
     results = []
     logger.info("upload start files=%d user=%s", len(files), user["username"])
     for file in files:
@@ -475,6 +517,8 @@ def delete_session(session_id: str, request: Request, user: dict = Depends(get_c
 @app.post("/feedback")
 def feedback(body: FeedbackRequest, user: dict = Depends(get_current_user)):
     """答案反馈：点赞 / 点踩，用于闭环收集 badcase"""
+    if not rate.feedback_limiter.allow(f"u{user['id']}"):
+        raise HTTPException(status_code=429, detail="操作过于频繁")
     if body.rating not in ("up", "down"):
         raise HTTPException(status_code=400, detail="rating 只能是 up / down")
     fid = save_feedback(body.rating, user_id=user["id"], session_id=body.session_id or "",

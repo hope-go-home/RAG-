@@ -89,6 +89,11 @@ QWEN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 QWEN_MODEL=qwen-max
 QWEN_EMBEDDING_MODEL=qwen3.7-text-embedding
 MYSQL_DATABASE=smart_query
+# 可选：检索集合与稠密维度（默认 enterprise_kb_docs / 2048）
+# RAG_COLLECTION=enterprise_kb_docs
+# RAG_DIM=2048
+# 可选：每用户每日 LLM token 预算（0 = 不限制）
+# DAILY_TOKEN_BUDGET=500000
 ```
 
 ### 4. 安装依赖
@@ -131,16 +136,25 @@ python SmartQuery/evaluation/eval_retrieval.py \
 
 100 题结果（WixQA 文章级，63561 块）：
 
-| 策略 | R@1 | R@5 | MRR@5 | Hit@10 |
-|------|-----|-----|-------|--------|
-| dense_only | 0.287 | 0.675 | 0.527 | 0.820 |
-| sparse_only | 0.153 | 0.537 | 0.350 | 0.720 |
-| hybrid_rrf | 0.200 | 0.583 | 0.420 | 0.810 |
-| **hybrid_rerank** | **0.330** | **0.683** | **0.542** | **0.830** |
+| 策略 | R@1 | R@10 | Hit@1 | Hit@10 |
+|------|-----|------|-------|--------|
+| dense_only | 0.287 | 0.743 | 0.350 | 0.820 |
+| hybrid_rrf | 0.285 | 0.760 | 0.350 | 0.840 |
+| **hybrid_rerank（生产）** | **0.330** | **0.812** | **0.380** | **0.890** |
 
-> 观察：WixQA 上稠密检索本身较强、稀疏偏弱，等权 RRF 反而略拖累排序，重排把首位命中拉回最高。下一步可下调稀疏权重再对比。
+> **召回诊断**：稠密检索里 gold 有 **92%** 进 top-50 块（平均第 5.7 名）→ **召回已饱和，瓶颈在首位排序**，且语料中大量近似文档（About X / Using X）。
+> **已实测无效/更差**：HyDE、多查询、maxP（多段取 max）、标题加权、换 bge-m3 稠密（Hit@10 0.89→0.84）——见 `scripts/exp_rerank_*.py`。
 
-评测报告（`retrieval_eval.json/.md`）由前端「评测结果」页通过 `GET /evaluation` 展示。
+评测报告（`retrieval_eval.json/.md`）由前端「评测结果」页通过 `GET /evaluation` 展示；CI 用 `scripts/eval_gate.py` 对 `SmartQuery/evaluation/baseline.json` 做**回归门禁**。
+
+---
+
+## 可观测性与成本控制
+
+- **指标**：`GET /metrics`（Prometheus）— HTTP 请求数/延迟、检索耗时与命中数、LLM token
+- **请求追踪**：每个请求生成 `X-Request-ID` 并贯穿日志
+- **限流**：登录按 IP、提问/上传/反馈按用户（进程内固定窗口；多副本应换 Redis）
+- **成本熔断**：按用户每日累计 token，超 `DAILY_TOKEN_BUDGET` 拒绝新提问
 
 ---
 

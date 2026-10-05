@@ -1,82 +1,40 @@
 # 评测方法说明
 
-本文档说明企业知识库智能问答系统的离线评测框架，包括检索质量评测、回答质量评测和分块策略消融实验。
+本文档说明本系统的离线评测框架：**检索质量评测**（文章级）、**回答质量评测**（LLM-as-Judge）与**回归门禁**。
 
 ---
 
 ## 一、评测框架总览
 
-| 评测类型 | 脚本 | 评测对象 | 核心指标 |
-|---------|------|---------|---------|
-| 检索质量 | `SmartQuery/evaluation/eval_retrieval.py` | 6 条检索链路 | Recall@k / MRR@k / nDCG@k |
-| 回答质量 | `SmartQuery/evaluation/eval_answer.py` | LLM 生成答案 | 忠实度 / 相关性 / 完整性 |
-| 分块消融 | `scripts/build_ablation.py` | 3 种分块策略 | Recall@k 对比 |
-
-统一标注集：`SmartQuery/evaluation/golden_set.json`（171 题）。
+| 评测类型 | 脚本 | 数据 | 核心指标 |
+|---------|------|------|---------|
+| 检索质量 | `SmartQuery/evaluation/eval_retrieval.py` | WixQA `wixqa_expertwritten` | Recall@k / MRR@k / nDCG@k / HitRate@k |
+| 回答质量 | `SmartQuery/evaluation/eval_answer.py` | 同上 | 忠实度 / 相关性 / 完整性 |
+| 回归门禁 | `scripts/eval_gate.py` | `baseline.json` | 指标跌破阈值即失败 |
 
 ---
 
-## 二、标注集设计
+## 二、数据集与标注
 
-### 2.0 语料设计：近似重复簇
+知识库：WixQA `wix_kb_corpus`（**6221 篇**英文帮助文章，`article_type` 三类：article / feature_request / known_issue）。
+问答：WixQA `wixqa_expertwritten`（**200 题**真实客服问题 + 专家答案，含 `article_ids`）。
 
-语料共 **78 篇**，按 6 种文档类型组织（技术文档 38 / 规章制度 22 / FAQ 5 /
-操作流程SOP 5 / 员工手册 4 / 数据报表 4），刻意构造「近似重复簇」——
-同主题的多个版本 / 地区 / 类型文档，正文结构高度相似，**仅关键数字不同**：
-
-| 簇 | 变体 | 区分关键词 |
-|----|------|-----------|
-| 考勤制度 | 2022 / 2023 / 2024 版 | 版本号、年假天数、迟到罚款 |
-| 差旅标准 | 国内一线 / 国内二线 / 海外 | 地区、住宿上限 |
-| 请假管理 | 事假 / 病假 / 婚假 / 产假 / 陪产假 / 丧假 / 调休 / 工伤 | 假种、天数、工资比例 |
-| 报销规范 | 差旅费 / 招待费 / 采购 / 培训费 | 费用类型、限额、时限 |
-| 巡检SOP | 服务器 / 数据库 / 网络设备 / 备份恢复 | 巡检对象、周期、阈值 |
-| 微服务API | 12 个中心（用户/订单/支付/库存/消息/商品/会员/营销/物流/搜索/评价/风控） | 服务名、QPS、鉴权方式 |
-| 数据库表 | 12 张表（t_user / t_order / t_payment ...） | 表名、主键、索引 |
-| 信息安全 | 密码策略 / 数据分级 / 权限申请 / 数据外发 | 规范名、要求 |
-| 员工手册 | 总部 / 华东分公司 / 华南分公司 | 主体、工时、餐补 |
-
-**设计动机**：稠密向量检索对近似文档会产生混淆（多个文档语义几乎相同），
-而稀疏检索（精确匹配版本号、地区名、数字）与重排能够区分。这样语料才有
-足够的区分难度，用来体现混合检索 / 重排 / Agentic 自省的价值。
-
-### 2.1 难度分层
-
-| 层级 | 名称 | 题数 | 考察点 |
-|------|------|------|--------|
-| A | 事实单跳 | 80 | 从单篇文档检索一个事实 |
-| B | 术语理解 | 8 | 解释专业术语（SLA/QPS/RTO 等） |
-| C | 语义改写 | 9 | 口语化 / 同义表达下的召回 |
-| D | 多跳推理 | 4 | 跨 2 篇文档组合计算 |
-| E | 易混淆 | 65 | 区分同主题多版本 / 多地区 / 多类型文档 |
-| F | 跨文档 | 3 | 跨文档整合信息 |
-| G | 结构化查询 | 2 | 表格数据（xlsx） |
-
-### 2.2 文档类型分布
-
-| 文档类型 | 题数 |
-|---------|------|
-| 技术文档 | 84 |
-| 规章制度 | 54 |
-| FAQ | 15 |
-| 操作流程SOP | 9 |
-| 员工手册 | 7 |
-| 数据报表 | 2 |
-
-### 2.3 标注字段
+`scripts/load_wixqa.py` 生成标注 `golden_wixqa.json`：
 
 ```json
 {
-  "level": "A_事实单跳",
-  "doc_type": "规章制度",
-  "question": "公司的年假天数是如何规定的？",
-  "gold_phrases": ["年休假5天", "年休假10天", "年休假15天"],
-  "reference": "根据考勤管理制度..."
+  "level": "wixqa_expertwritten",
+  "doc_type": "article",
+  "question": "Can I start accepting payments while my Wix Payments account is under verification?",
+  "gold_sources": ["Wix_Payments_Verification_Process__49d9e88f.md"],
+  "reference": "..."
 }
 ```
 
-- `gold_phrases`：用于检索评测——父块包含任一短语即视为相关
-- `reference`：用于回答评测——LLM 评审的参考答案
+- `gold_sources`：相关**文章文件名**（= Milvus 的 `source` 字段），用于**文章级**检索评测
+- `reference`：参考答案，用于回答评测
+
+> gold 篇数分布：1 篇 148 题、2 篇 46 题、3 篇 6 题（平均 1.29）。
 
 ---
 
@@ -86,160 +44,79 @@
 
 | 策略 | 说明 |
 |------|------|
-| `dense_only` | 纯稠密检索（qwen3.7-text-embedding）← 基线 |
-| `sparse_only` | 纯稀疏检索（bge-m3 词汇权重） |
-| `hybrid_rrf` | 稠密 + 稀疏 + RRF 融合 |
-| `hybrid_rerank` | RRF 融合 + BGE-Reranker 重排序 ← 生产链路 |
-| `hybrid_multiquery` | RRF 融合 + LLM 多查询变体召回 + 重排 |
-| `agentic` | 重排概率不足时 LLM 改写查询，多轮重检并合并 |
+| `dense_only` | 纯稠密（qwen-embedding）← 基线 |
+| `sparse_only` | 纯稀疏（BGE-M3 词汇权重） |
+| `hybrid_rrf` | 稠密 + 稀疏 + RRF |
+| `hybrid_rerank` | RRF + BGE-Reranker-v2-M3 ← 生产链路 |
+| `hybrid_multiquery` | 多查询变体 + 重排 |
+| `agentic` | 重排分不足时 LLM 改写查询多轮重检 |
 
 ### 3.2 指标
 
 | 指标 | 定义 |
 |------|------|
-| Recall@k | 检索到的相关父块数 / 该问题全部相关父块数 |
-| Precision@k | 检索到的相关父块数 / k |
-| MRR@k | 第一个相关父块排位的倒数 |
+| Recall@k | 命中 gold 数 / 该题 gold 总数（文章级） |
+| MRR@k | 首个 gold 排位的倒数 |
 | nDCG@k | 归一化折损累计增益 |
-| HitRate@k | 前 k 是否至少命中一个相关父块 |
+| HitRate@k | 前 k 是否至少命中一个 gold（**二值**） |
 
-所有指标在 k = 1/3/5/10 上计算，Recall 附带 **Bootstrap 95% 置信区间**（1000 次重采样）。
+> 说明：**多篇文章作答**会让 Recall@1 有结构性上限 `≈ mean(1/|gold|) = 0.865`；而 **HitRate@1 上限为 1.0**（命中任一 gold 即可）。
 
 ### 3.3 运行
 
 ```bash
-python SmartQuery/evaluation/eval_retrieval.py
-python SmartQuery/evaluation/eval_retrieval.py --limit 10 --strategies hybrid_rrf hybrid_rerank
+python SmartQuery/evaluation/eval_retrieval.py \
+  --collection enterprise_kb_docs \
+  --golden SmartQuery/evaluation/golden_wixqa.json \
+  --limit 100 --strategies dense_only sparse_only hybrid_rrf hybrid_rerank
 ```
+输出：`evaluation/report/retrieval_eval.md` / `.json`。
 
-输出：`evaluation/report/retrieval_eval.md` 和 `retrieval_eval.json`。
+### 3.4 结果（100 题，文章级）
 
-### 3.4 结果（171 题 / 419 父块）
+| 策略 | R@1 | R@10 | Hit@1 | Hit@10 |
+|------|-----|------|-------|--------|
+| dense_only | 0.287 | 0.743 | 0.350 | 0.820 |
+| hybrid_rrf | 0.285 | 0.760 | 0.350 | 0.840 |
+| **hybrid_rerank（生产）** | **0.330** | **0.812** | **0.380** | **0.890** |
 
-| 策略 | Recall@1 | Recall@5 | Recall@10 | MRR@5 | nDCG@5 | HitRate@1 | HitRate@10 |
-|------|----------|----------|-----------|-------|--------|-----------|------------|
-| dense_only（基线） | 0.717 | 0.944 | 0.970 | 0.855 | 0.862 | 0.754 | 0.988 |
-| sparse_only | 0.771 | 0.899 | 0.959 | 0.875 | 0.859 | 0.836 | 0.977 |
-| hybrid_rrf | 0.692 | 0.937 | 0.976 | 0.851 | 0.854 | 0.760 | 0.994 |
-| **hybrid_rerank（生产链路）** | **0.882** | **0.967** | **0.987** | **0.976** | **0.954** | **0.959** | **1.000** |
-| hybrid_multiquery | 0.882 | 0.967 | 0.987 | 0.976 | 0.954 | 0.959 | 1.000 |
-| agentic | 0.882 | 0.967 | 0.987 | 0.976 | 0.954 | 0.959 | 1.000 |
+**结论与诊断**
 
-**结论**
-
-- **重排显著提升排序精度（主结论）**：相比稠密基线，**首位命中率（HitRate@1）0.754 → 0.959（+27.1%）**、
-  Recall@1 0.717 → 0.882（+23.0%）、MRR@5 0.855 → 0.976（+14.2%）、nDCG@5 0.862 → 0.954（+10.6%）、
-  Recall@5 0.944 → 0.967（+2.5%）。
-- **父块携带文档标题**：多版本文档（2022/2023/2024 版）条款文本几乎相同，父块带上标题后，
-  重排与生成才能正确区分版本；该设计同时提升了检索与回答质量。
-- **RRF 融合提升召回上限**：Recall@10 0.970 → 0.976，HitRate@10 0.988 → 0.994。
-  RRF 是「召回导向」的融合，单独使用时 Recall@1 反而下降（0.717 → 0.692），需配合重排修正排序。
-- **Multi-Query / Agentic 在本语料上无额外提升**：单查询召回已接近饱和（Recall@10 0.970），
-  查询扩展没有新增可召回的文档；该能力保留用于复杂 / 低置信度查询场景。
-
-> 结论：检索链路的经典分工是 **RRF 扩召回、重排提精度**；在主指标上体现为**首位命中率 +27.1%**。
+- **重排是主要增益**：R@10 0.743 → 0.812，Hit@10 0.82 → 0.89。
+- **召回已饱和、瓶颈在排序**：稠密检索里 gold 有 **92%（183/200）进 top-50 块**，平均最佳排名 **5.7**；稀疏 80% / 9.2。→ 提升点不在召回广度，而在首位排序。
+- **等权 RRF 会稀释稠密**（稀疏较弱），故采用**稠密主导**融合（0.8:0.2）。
+- **已实测无效/更差**：HyDE、多查询（无增益）、maxP 多段取 max（无变化）、标题加权（略降）、换 bge-m3 稠密（Hit@10 0.89→0.84）。见 `scripts/exp_rerank_repr.py`、`scripts/exp_rerank_boost.py`。
+- **近似文档**：Wix 帮助中心大量 "About X / Using X" 高度相似，首位命中天然有难度。
 
 ---
 
 ## 四、回答质量评测（LLM-as-Judge）
 
-### 4.1 三维评分
-
 | 维度 | 说明 | 分值 |
 |------|------|------|
-| 忠实度 Faithfulness | 回答是否基于检索文档，有无幻觉 | 1-5 |
-| 相关性 Relevance | 回答是否针对用户问题 | 1-5 |
-| 完整性 Completeness | 回答是否覆盖关键信息 | 1-5 |
-
-### 4.2 短语匹配
-
-额外计算 `gold_phrases` 在回答中的命中比例，作为客观辅助指标，避免 LLM 评审的波动。
-
-### 4.3 评审 Prompt
-
-```
-你是一个严格的RAG系统评估专家。请对以下问答对进行评分。
-用户问题：{question}
-参考答案：{reference}
-系统回答：{answer}
-请从忠实度、相关性、完整性三个维度评分（1-5分），输出JSON。
-```
-
-### 4.4 运行
+| 忠实度 Faithfulness | 是否基于检索资料，有无幻觉 | 1-5 |
+| 相关性 Relevance | 是否针对问题 | 1-5 |
+| 完整性 Completeness | 是否覆盖关键信息 | 1-5 |
 
 ```bash
-python SmartQuery/evaluation/eval_answer.py
-python SmartQuery/evaluation/eval_answer.py --limit 5 --verbose
+python SmartQuery/evaluation/eval_answer.py --limit 20 --verbose
 ```
-
-输出：`evaluation/report/answer_eval.md` 和 `answer_eval.json`。
-
-### 4.5 结果（171 题）
-
-| 维度 | 平均分（1-5） |
-|------|--------------|
-| 忠实度 Faithfulness | **4.80** |
-| 相关性 Relevance | **4.98** |
-| 完整性 Completeness | **4.94** |
-| 短语匹配（gold 命中率） | 66% |
-
-> 说明：短语匹配率偏低，是因为部分 gold 短语与生成的规范表达存在字面差异（同义改写），
-> 故以 LLM-as-Judge 的三维评分为主，短语匹配作为客观锚点交叉验证。
 
 ---
 
-## 五、分块策略消融实验（核心亮点）
-
-### 5.1 实验设计
-
-**控制变量法**：语料、检索链路、标注集全部不变，只改分块策略。
-
-```
-同一份企业语料
-    ├── kb_fixed     固定长度分块（512 字符一刀切）    ← 基线
-    ├── kb_header    标题感知分块（仅按 Markdown 标题）
-    └── kb_adaptive  类型自适应分块（按文档类型选策略） ← 本方案
-
-用同一套 golden_set 对 3 个集合各跑一遍评测
-对比 Recall@5
-```
-
-### 5.2 三种策略对比
-
-| 策略 | 规章制度 | FAQ | SOP | 技术文档 | 员工手册 | 数据报表 |
-|------|---------|-----|-----|---------|---------|---------|
-| 固定长度 | 一刀切 | 一刀切 | 一刀切 | 一刀切 | 一刀切 | 一刀切 |
-| 标题感知 | 按标题 | 按标题 | 按标题 | 按标题 | 按标题 | 按标题 |
-| **类型自适应** | 按条款 | 按问答对 | 按步骤 | 按接口+代码块 | 按章节 | 整表保留 |
-
-### 5.3 运行
+## 五、回归门禁
 
 ```bash
-# 1. 构建 3 个集合
-python scripts/build_ablation.py
-
-# 2. 分别评测
-python SmartQuery/evaluation/eval_retrieval.py --collection kb_fixed --strategies hybrid_rerank
-python SmartQuery/evaluation/eval_retrieval.py --collection kb_header --strategies hybrid_rerank
-python SmartQuery/evaluation/eval_retrieval.py --collection kb_adaptive --strategies hybrid_rerank
+python scripts/eval_gate.py            # 对比 report 与 baseline.json
+python scripts/eval_gate.py --tol 0.05 # 自定义容忍度
 ```
-
-### 5.4 结果（示例模板）
-
-| 分块策略 | Recall@5 | 相对基线提升 |
-|---------|----------|-------------|
-| 固定长度（基线） | 0.xxx | — |
-| 标题感知 | 0.xxx | +xx.x pp |
-| **类型自适应** | **0.xxx** | **+xx.x pp** |
-
-> 该表证明类型自适应分块相比固定分块在检索召回上的提升，是项目核心量化结论。
+CI 会在有评测报告时执行；指标跌破 `基线 - 容忍度` 则失败，阻断劣化。
 
 ---
 
-## 六、评测注意事项
+## 六、注意事项
 
-1. **评测前需先入库语料**：`python scripts/load_corpus.py --reset`
-2. **Bootstrap CI 反映稳定性**：置信区间越窄说明结果越可靠
-3. **LLM-as-Judge 需固定 temperature=0**：减少评审波动
-4. **分层统计**：按 `level` 和 `doc_type` 分别统计，定位薄弱环节
-5. **短语匹配为客观锚点**：与 LLM 评分交叉验证
+1. 评测前需先入库语料：`python scripts/load_wixqa.py && python scripts/load_corpus.py --corpus-dir data/wixqa_corpus`
+2. 重排在 CPU 上较慢，大量评测耗时较长（可 `--limit` 抽样）
+3. LLM-as-Judge 建议固定 `temperature=0`
+4. 报告同时给 Recall 与 HitRate，并声明天花板，避免被单指标误导

@@ -23,6 +23,9 @@ DEFAULT_ADMIN_PASSWORD = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin123")
 # 是否开放自助注册（生产建议 false，改为管理员创建用户）
 ALLOW_REGISTRATION = os.getenv("ALLOW_REGISTRATION", "true").lower() in ("1", "true", "yes")
 
+# 每用户每日 LLM token 预算（超限拒绝新的提问；0 表示不限制）
+DAILY_TOKEN_BUDGET = int(os.getenv("DAILY_TOKEN_BUDGET", "500000"))
+
 MYSQL_HOST = os.getenv("MYSQL_HOST")
 MYSQL_PORT = int(os.getenv("MYSQL_PORT"))
 MYSQL_USER = os.getenv("MYSQL_USER")
@@ -31,5 +34,9 @@ MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
 
 MILVUS_HOST = os.getenv("MILVUS_HOST")
 MILVUS_PORT = int(os.getenv("MILVUS_PORT"))
+
+# 检索集合与稠密维度（qwen dense=2048，默认集合 enterprise_kb_docs）
+RAG_COLLECTION = os.getenv("RAG_COLLECTION", "enterprise_kb_docs")
+RAG_DIM = int(os.getenv("RAG_DIM", "2048"))
 
 # HF_HOME 会被 load_dotenv() 读到环境变量，SentenceTransformer 导入时自动识别

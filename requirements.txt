@@ -36,3 +36,6 @@ requests>=2.31
 
 # 数据集下载（WixQA 语料转换）
 datasets>=2.18
+
+# 可观测性（Prometheus 指标）
+prometheus-client>=0.20

@@ -424,3 +424,48 @@ def feedback_stats() -> dict:
         return {"up": up, "down": down, "total": up + down}
     finally:
         db.close()
+
+
+# ---------------- 每日 token 用量（成本预算熔断） ---------------- #
+
+class TokenUsage(Base):
+    """按用户/按天累计 LLM token 用量，用于每日预算熔断"""
+    __tablename__ = "token_usage"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, index=True, nullable=True)
+    day = Column(String(10), index=True, nullable=False)   # YYYY-MM-DD
+    tokens = Column(Integer, nullable=False, default=0)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+def _today() -> str:
+    return datetime.utcnow().strftime("%Y-%m-%d")
+
+
+def add_tokens(user_id: int | None, n: int) -> None:
+    if not n:
+        return
+    db = SessionLocal()
+    try:
+        row = (db.query(TokenUsage)
+               .filter(TokenUsage.user_id == user_id, TokenUsage.day == _today()).first())
+        if row is None:
+            db.add(TokenUsage(user_id=user_id, day=_today(), tokens=n))
+        else:
+            row.tokens = (row.tokens or 0) + n
+        db.commit()
+    except Exception as e:
+        logger.warning("add_tokens failed: %s", e)
+    finally:
+        db.close()
+
+
+def get_tokens_today(user_id: int | None) -> int:
+    db = SessionLocal()
+    try:
+        row = (db.query(TokenUsage)
+               .filter(TokenUsage.user_id == user_id, TokenUsage.day == _today()).first())
+        return row.tokens if row else 0
+    finally:
+        db.close()

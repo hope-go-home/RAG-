@@ -128,8 +128,8 @@ def main() -> None:
         url = info.get("url") or ""
         fhash = file_sha256(str(file))
         rec = get_document_by_source(file.name)
-        if (rec and rec.get("status") == "active" and rec.get("file_hash") == fhash
-                and rec.get("chunk_count", 0) > 0):
+        if (not args.reset and rec and rec.get("status") == "active"
+                and rec.get("file_hash") == fhash and rec.get("chunk_count", 0) > 0):
             skipped += 1
             continue
         stale_sources.append(file.name)

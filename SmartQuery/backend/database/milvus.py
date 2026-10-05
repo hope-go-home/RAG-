@@ -1,11 +1,11 @@
-from SmartQuery.backend.config import MILVUS_HOST, MILVUS_PORT
+from SmartQuery.backend.config import MILVUS_HOST, MILVUS_PORT, RAG_COLLECTION, RAG_DIM
 from SmartQuery.backend.logger import get_logger
 from pymilvus import connections, Collection, CollectionSchema, FieldSchema, DataType, utility
 
 logger = get_logger(__name__)
 
-COLLECTION_NAME = "enterprise_kb_docs"
-DIMENSION = 2048          # qwen 稠密
+COLLECTION_NAME = RAG_COLLECTION
+DIMENSION = RAG_DIM             # bge-m3 dense = 1024
 PARTITIONS = ["pdf", "docx", "txt", "md", "xlsx"]
 
 

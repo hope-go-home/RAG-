@@ -1,3 +1,7 @@
+"""嵌入层：稠密用 qwen（DashScope，2048 维），稀疏用 BAAI/bge-m3。
+
+实测对比：本语料（英文 WixQA）上 qwen 稠密明显优于 bge-m3 稠密，故稠密走 qwen。
+"""
 from SmartQuery.backend.config import QWEN_API_KEY, QWEN_BASE_URL, QWEN_EMBEDDING_MODEL
 from langchain_openai import OpenAIEmbeddings
 from FlagEmbedding import BGEM3FlagModel
@@ -26,33 +30,18 @@ def embed_query(text: str) -> list[float]:
     return embeddings.embed_query(text)
 
 
-# ---------------- BGE-M3：稠密(1024) + 稀疏，一次 forward 同时产出 ---------------- #
+# ---------------- BGE-M3：稀疏词汇权重 ---------------- #
 
-bge_model = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
-
-
-def embed_documents_bge(texts: list[str]) -> tuple[list[list[float]], list[dict[int, float]]]:
-    """批量：返回 (bge 稠密 1024 维, bge 稀疏词汇权重)"""
-    if not texts:
-        return [], []
-    out = bge_model.encode(texts, return_dense=True, return_sparse=True)
-    dense = [list(map(float, v)) for v in out["dense_vecs"]]
-    sparse = [{int(t): float(w) for t, w in d.items()} for d in out["lexical_weights"]]
-    return dense, sparse
-
-
-def embed_query_bge(text: str) -> tuple[list[float], dict[int, float]]:
-    """单条查询：返回 (bge 稠密, bge 稀疏)"""
-    out = bge_model.encode([text], return_dense=True, return_sparse=True)
-    dense = list(map(float, out["dense_vecs"][0]))
-    sparse = {int(t): float(w) for t, w in out["lexical_weights"][0].items()}
-    return dense, sparse
-
-
-# 兼容旧接口（只取稀疏）
-def embed_query_sparse(text: str) -> dict[int, float]:
-    return embed_query_bge(text)[1]
+sparse_model = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
 
 
 def embed_documents_sparse(texts: list[str]) -> list[dict[int, float]]:
-    return embed_documents_bge(texts)[1]
+    if not texts:
+        return []
+    out = sparse_model.encode(texts, return_sparse=True, return_dense=False)
+    return [{int(t): float(w) for t, w in d.items()} for d in out["lexical_weights"]]
+
+
+def embed_query_sparse(text: str) -> dict[int, float]:
+    out = sparse_model.encode([text], return_sparse=True, return_dense=False)
+    return {int(t): float(w) for t, w in out["lexical_weights"][0].items()}

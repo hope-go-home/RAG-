@@ -5,6 +5,7 @@ import time
 import threading
 from SmartQuery.rag.embedding import embed_query,embed_query_sparse
 from SmartQuery.backend.database.milvus import search_dense,search_sparse
+from SmartQuery.backend import metrics
 from SmartQuery.backend.config import QWEN_API_KEY, QWEN_BASE_URL, QWEN_MODEL
 from SmartQuery.backend.logger import get_logger
 from sentence_transformers import CrossEncoder
@@ -294,6 +295,10 @@ def retrieve_with_meta(question: str, top_k: int = 10, partition_name: str | Non
         sparse_hit_count=len(sparse_results),
         fused_count=len(scored),
     )
+
+    # 指标打点
+    metrics.RETRIEVAL_SECONDS.observe(elapsed / 1000.0)
+    metrics.RETRIEVAL_HITS.observe(len(sources))
 
     # 存入缓存
     _put_to_cache(cache_key, result)

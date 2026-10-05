@@ -1,0 +1,18 @@
+{
+  "_comment": "检索评测基线（qwen 稠密 + bge 稀疏 + 文章级重排，WixQA 文章级 100 题）。CI/发布前用 eval_gate.py 对比，跌破容忍度即失败。",
+  "dense_only": {
+    "recall@1": 0.287,
+    "recall@10": 0.743,
+    "hit_rate@10": 0.82
+  },
+  "hybrid_rrf": {
+    "recall@1": 0.285,
+    "recall@10": 0.76,
+    "hit_rate@10": 0.84
+  },
+  "hybrid_rerank": {
+    "recall@1": 0.33,
+    "recall@10": 0.812,
+    "hit_rate@10": 0.89
+  }
+}
