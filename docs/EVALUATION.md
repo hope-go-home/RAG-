@@ -9,7 +9,7 @@
 | 评测类型 | 脚本 | 数据 | 核心指标 |
 |---------|------|------|---------|
 | 检索质量 | `SmartQuery/evaluation/eval_retrieval.py` | WixQA `wixqa_expertwritten` | Recall@k / MRR@k / nDCG@k / HitRate@k |
-| 回答质量 | `SmartQuery/evaluation/eval_answer.py` | 同上 | 忠实度 / 相关性 / 完整性 |
+| 回答质量（生成侧） | `SmartQuery/evaluation/eval_answer.py` | 同上 | 答案正确率 / 忠实度 / 幻觉率 |
 | 回归门禁 | `scripts/eval_gate.py` | `baseline.json` | 指标跌破阈值即失败 |
 
 ---
@@ -90,17 +90,43 @@ python SmartQuery/evaluation/eval_retrieval.py \
 
 ---
 
-## 四、回答质量评测（LLM-as-Judge）
+## 四、回答质量评测（LLM-as-Judge，生成侧）
 
-| 维度 | 说明 | 分值 |
-|------|------|------|
-| 忠实度 Faithfulness | 是否基于检索资料，有无幻觉 | 1-5 |
-| 相关性 Relevance | 是否针对问题 | 1-5 |
-| 完整性 Completeness | 是否覆盖关键信息 | 1-5 |
+在检索**之后**评估系统**最终回答**的质量，填补"检索对了 ≠ 答对了"的空白。
+
+| 指标 | 定义 |
+|------|------|
+| 答案正确率 | 裁判对比系统回答与参考答案，给 correct / partial / incorrect |
+| 忠实度 | 裁判**基于检索到的上下文**判断回答是否有据（0–1） |
+| 幻觉率 | 含 ≥1 条无上下文支持声明的答案占比 |
+| 语义相似度 | 系统回答与参考答案的 embedding 余弦 |
+
+> **关键方法论**：忠实度/幻觉必须用**「检索到的上下文」**判定，而不是参考答案——否则评判依据比生成时实际看到的资料还全，会把有据的陈述误判为幻觉。
+
+裁判模型由 `JUDGE_MODEL` 配置（建议强于生成模型），生成与裁判均 `temperature=0`。
 
 ```bash
-python SmartQuery/evaluation/eval_answer.py --limit 20 --verbose
+python SmartQuery/evaluation/eval_answer.py --limit 50 --workers 4   # 抽样 50，4 并发
+python SmartQuery/evaluation/eval_answer.py --dry-run                # 只看待跑题数，不调用模型
 ```
+
+支持**断点续跑**：每题算完即写 `report/answer_eval.checkpoint.jsonl`，中断后重跑自动跳过已完成题（`--no-resume` 可强制全量重跑）。
+
+### 结果（WixQA `wixqa_expertwritten`，抽样 50 题）
+
+| 指标 | 数值 |
+|------|------|
+| 正确率 (correct) | **80%** |
+| correct + partial | **100%** |
+| 平均忠实度 | **0.96** |
+| 幻觉率（忠实度 < 0.9） | **12%** |
+| 平均语义相似度 | 0.87 |
+
+**结论**
+
+- 忠实度 0.96、幻觉率 12%：回答基本有据，编造可控。
+- 检索 Hit@10 ≈ 0.89 → 最终答对 0.80，差距与"约 11% 问题 gold 未进 top-10"吻合，说明**丢分主要在检索召回，生成环节未明显拖后腿**。
+- 口径说明：该 50 题为分阶段运行（部分题目使用了不同的生成/裁判模型），属**混合口径**；如需对外统一口径，可用 `--no-resume` 以同一模型全量重跑。
 
 ---
 

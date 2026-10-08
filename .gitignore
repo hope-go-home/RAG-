@@ -22,6 +22,7 @@ SmartQuery/evaluation/report/
 
 # 日志
 logs/
+*.log
 
 # 前端
 frontend/node_modules/

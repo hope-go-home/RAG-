@@ -243,7 +243,7 @@ def chat(request: Request, question: str = Query(...), session_id: str = Query(d
     _check_chat_quota(user)
     sid = session_id or uuid.uuid4().hex[:8]
     logger.info("chat start session=%s user=%s question=%s", sid, user["username"], question[:100])
-    initial_state = _build_initial_state(sid, question, doc_type)
+    initial_state = _build_initial_state(sid, question, doc_type, user["id"])
     result = rag_agent.invoke(initial_state)
     _record_tokens(user["id"], question, result.get("answer", ""))
     _persist_session(sid, question, result, user["id"])
@@ -270,7 +270,7 @@ async def chat_stream(http_request: Request, request: ChatRequest,
                       user: dict = Depends(get_current_user)):
     _check_chat_quota(user)
     sid = request.session_id or uuid.uuid4().hex[:8]
-    initial_state = _build_initial_state(sid, request.question, request.doc_type)
+    initial_state = _build_initial_state(sid, request.question, request.doc_type, user["id"])
 
     async def event_generator():
         accumulated = {}  # 累积所有节点的输出，避免后一节点覆盖前一节点的字段
@@ -549,8 +549,23 @@ def evaluation(user: dict = Depends(get_current_user)):
 
 # ------------------ 内部辅助函数 ------------------ #
 
-def _build_initial_state(sid: str, question: str, doc_type: str | None = None) -> dict:
-    """构建 Agent 初始状态，复用已有 session 的上下文"""
+def _rebuild_history(sid: str, user_id: int | None) -> list[dict]:
+    """内存未命中时，从 MySQL 回读该会话问答记录，重建 Agent 可用的对话历史"""
+    if user_id is None:
+        return []
+    from SmartQuery.backend.database.mysql import get_history
+    hist: list[dict] = []
+    for r in get_history(sid, user_id):
+        hist.append({"role": "user", "content": r.get("question", "")})
+        ans = r.get("answer") or ""
+        if ans:
+            hist.append({"role": "assistant", "content": ans})
+    return hist[-20:]  # 与内存一致：最多保留最近 20 条消息
+
+
+def _build_initial_state(sid: str, question: str, doc_type: str | None = None,
+                         user_id: int | None = None) -> dict:
+    """构建 Agent 初始状态，复用已有 session 的上下文（内存未命中则回读 MySQL）"""
     state: dict = {"question": question, "doc_type": doc_type or ""}
 
     # 获取或创建 session 锁
@@ -564,6 +579,12 @@ def _build_initial_state(sid: str, question: str, doc_type: str | None = None) -
             ctx = session_contexts[sid]
             state["context"] = ctx.get("context", [])
             state["chat_history"] = ctx.get("history", [])
+        else:
+            # 回源：重启 / 多 worker 导致内存无上下文时，从 MySQL 重建对话历史
+            history = _rebuild_history(sid, user_id)
+            if history:
+                state["chat_history"] = history
+                logger.info("session rebuild from mysql sid=%s msgs=%d", sid, len(history))
     return state
 
 

@@ -14,6 +14,11 @@ QWEN_EMBEDDING_MODEL = os.getenv("QWEN_EMBEDDING_MODEL")
 # 视觉/OCR 模型（扫描件、图片识别）
 QWEN_VL_OCR_MODEL = os.getenv("QWEN_VL_OCR_MODEL", "qwen-vl-max")
 
+# 评测裁判模型（LLM-as-Judge）：用更强的模型，缺省回退到聊天模型与同一套凭据
+JUDGE_MODEL = os.getenv("JUDGE_MODEL", QWEN_MODEL)
+JUDGE_API_KEY = os.getenv("JUDGE_API_KEY", QWEN_API_KEY)
+JUDGE_BASE_URL = os.getenv("JUDGE_BASE_URL", QWEN_BASE_URL)
+
 # 认证（JWT）
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "720"))
